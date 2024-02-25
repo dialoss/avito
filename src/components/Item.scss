@@ -1,0 +1,37 @@
+.item {
+    .images {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+
+        img {
+            width: 100%;
+            border-radius: 4px;
+            box-shadow: 0 0 1px 0 grey;
+        }
+
+    }
+
+    .wrapper {
+        max-width: calc(100% / var(--columns));
+        padding: 4px;
+    }
+
+    .title p {
+        font-weight: 700;
+    }
+
+    .big {
+        font-size: 20px;
+    }
+    .price p:first-child {
+        font-size: 20px;
+        font-weight: 600;
+    }
+    .price p {
+        display: inline;
+    }
+    .price {
+        margin-bottom: 5px;
+    }
+}
