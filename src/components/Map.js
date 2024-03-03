@@ -5,47 +5,79 @@ import {actions} from "../store/app";
 
 class YMap {
     prevSelected = null;
+    _map = null;
+    objectManager = null;
 
     constructor(data) {
-        window._map = new window.ymaps.Map(
-            "map",
-            {
-                center: data.geo,
-                zoom: 13
-            },
-            {
-                searchControlProvider: "yandex#search"
-            }
-        );
-        window.objectManager = new window.ymaps.ObjectManager({
-            gridSize: 32,
+        window.ymaps.ready(() => {
+            this._map = new window.ymaps.Map(
+                "map",
+                {
+                    center: data.geo,
+                    zoom: 12
+                },
+                {
+                    searchControlProvider: "yandex#search"
+                }
+            );
+            this.objectManager = new window.ymaps.ObjectManager({
+                gridSize: 32,
+            });
+            this.objectManager.objects.events.add('click', e => {
+                const id = e.get('objectId');
+                this.selectMarker(id, false);
+                store.dispatch(actions.setCurrent(id));
+            });
+            this._map.geoObjects.add(this.objectManager);
         });
-        window.objectManager.add(Object.values(data.items).map(it => this.createMarker(it)))
-        window.objectManager.objects.events.add('click', function (e) {
-            store.dispatch(actions.setCurrent(e.get('objectId')))
-        });
-        window._map.geoObjects.add(window.objectManager);
     }
 
-    selectMarker(id) {
-        window.objectManager.objects.setObjectOptions(id, {
+    replaceMarkers(data) {
+        this.removeAllMarkers();
+        this.addMarkers(data.items);
+    }
+
+    removeAllMarkers() {
+        this.objectManager && this.objectManager.removeAll();
+    }
+
+    removeMarkers(items) {
+        this.objectManager.remove(items.map(it => this.createMarker(it)))
+    }
+
+    addMarkers(items) {
+        this.objectManager && this.objectManager.add(items.map(it => this.createMarker(it)))
+    }
+
+    selectMarker(id, center) {
+        if (this.prevSelected === id) return;
+        this.objectManager.objects.setObjectOptions(id, {
             preset: 'islands#redIcon',
             zIndex: 1000,
         });
-        window._map.setCenter(item.coords);
+        if (this.prevSelected) {
+            this.unselectMarker(this.prevSelected);
+        }
+        this.prevSelected = id;
+        if (center) this._map.setCenter(store.getState().initialData.items[id].coords);
     }
 
     unselectMarker(id) {
-        window.objectManager.objects.setObjectOptions(id, {
+        this.objectManager.objects.setObjectOptions(id, {
             preset: 'islands#blueIcon',
             zIndex: 1,
         });
     }
 
     filterMarkers(filter) {
-        window.objectManager.setFilter(function (obj) {
-            return filter.find(x => x === obj.id)
-        })
+        (async () => {
+            while (!this.objectManager) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            this.objectManager.setFilter(function (obj) {
+                return filter.find(x => x.id === obj.id)
+            })
+        })();
     }
 
     createMarker(data) {
@@ -65,22 +97,35 @@ class YMap {
             }
         }
     }
+
+    resize() {
+        this._map.container.fitToViewport();
+    }
 }
 
-let map = null;
+export let map = null;
 
 export const Map = () => {
-    const {selected, data} = useSelector(state => state);
+    const data = useSelector(state => state.data);
+    const selected = useSelector(state => state.mapSelected);
+    const displayed = useSelector(state => state.displayed);
 
     useEffect(() => {
-        if (!data.items) return;
+        if (!data.geo || map) return;
         map = new YMap(data);
     }, [data]);
 
     useLayoutEffect(() => {
+        map && map.replaceMarkers(data);
+    }, [data]);
 
+    useLayoutEffect(() => {
+        for (const id of selected) map.selectMarker(id, true);
     }, [selected]);
 
+    useEffect(() => {
+        map && map.filterMarkers(displayed);
+    }, [displayed]);
     return (
         <div id="map"></div>
     );

@@ -10,6 +10,7 @@ import {actions} from "../store/app";
 import {store} from "../store";
 import {ru, tableFields} from "../config";
 import {formatField} from "../tools";
+import {useSelector} from "react-redux";
 
 class SheetController {
     sheetRef = null;
@@ -17,27 +18,27 @@ class SheetController {
 
     init(data, sheetRef) {
         this.sheetRef = sheetRef;
-        const title = {};
-        for (const f of tableFields) {
-            title[f] = ru[f];
-        }
-        return [title, ...data.map(it => {
+        return data.map(it => {
             let d = {};
             for (const f in it)
                 d = {...d, ...formatField(f, it[f])};
-            let ordered = {};
+            let ordered = {id: it.id};
             for (const f of tableFields) {
-                ordered[f] = d[f];
+                ordered[ru[f]] = d[f];
             }
             return ordered;
-        })]
+        })
     }
 
     format() {
+        if (!this.sheetRef) return;
         const sh = this.sheetRef.current;
-        sh.cellFormat({fontWeight:"bold"}, `A2:T2`);
+        sh.cellFormat({fontWeight: "bold"}, `A1:T1`);
         sh.setRowsHeight(20);
-        sh.select = this.select;
+        sh.setColumnsWidth(150, ['H']);
+        sh.setColumnsWidth(1, ['A']);
+        sh.select = (args) => this.select(args);
+        sh.applyFilter([{field: "H", predicate: '', operator: 'notequal', value: ''}]);
     }
 
     fillRow(row) {
@@ -49,50 +50,72 @@ class SheetController {
     }
 
     select(args) {
+        const sh = this.sheetRef.current;
         let selected = [];
-        let lastRow = 0;
-        for (const range of args.range.split(' ')) {
-            const row = range.split(':')[0].match(/\d*/g)[1];
-            selected.push(this.sheetRef.current.getRowData(+row - 1)[0].id);
-            lastRow = +row;
+        let r = args.range.split(':');
+        let start = +r[0].match(/\d*/g)[1];
+        let end = +r[1].match(/\d*/g)[1];
+        let activeSheet = sh.getActiveSheet();
+
+        for (let i = start; i <= end; i++) {
+            const r = (activeSheet.rows[i - 1]);
+            if (!r) continue;
+            let filteredRow = r.isFiltered;
+            if (filteredRow) continue;
+            let d = sh.getRowData(i - 1);
+            if (!d || isNaN(d[0].id)) continue;
+            selected.push(d[0].id);
         }
-        const lastID = selected.slice(-1);
-        this.fillRow(lastRow);
+        if (!selected.length) return;
+        const lastID = selected.slice(-1)[0];
+        this.fillRow(end);
         store.dispatch(actions.setCurrent(lastID));
+        store.dispatch(actions.setVisible(selected));
     }
 }
 
-let sheetController = null;
+let sheetController = new SheetController();
+window.sh = sheetController
 
-export const Sheet = ({data}) => {
+export const Sheet = () => {
+    const data = useSelector(state => state.initialData.items);
     const spreadsheetRef = useRef(null);
     const [formattedData, setData] = useState([]);
 
-    useEffect(() => {
-        setTimeout(() => {
+    useLayoutEffect(() => {
+        const bannerRemove = setInterval(() => {
             const b = document.querySelector("body")
             const x = [...b.children];
             for (const child of x) {
                 if (child.classList.length === 0) {
                     b.removeChild(child);
-                    break;
+                    clearInterval(bannerRemove);
+                    return;
                 }
             }
-        }, 1000);
+        }, 50);
     }, [data]);
 
-    useLayoutEffect(() => {
-        sheetController = new SheetController();
-    }, []);
 
-    useLayoutEffect(() => {
-        if (!data.length) return;
-        setData(sheetController.init(data, spreadsheetRef));
+    useEffect(() => {
+        const items = Object.values(data);
+        if (!items.length) return;
+        setData(sheetController.init(items, spreadsheetRef));
     }, [data]);
+
+    useEffect(() => {
+        setTimeout(() => {
+            if (sheetController.sheetRef) {
+                sheetController.format();
+            }
+        }, 200);
+    }, [formattedData])
 
     return (
         <div className={'sheet'}>
-            {formattedData.length && <SpreadsheetComponent ref={spreadsheetRef} created={() => sheetController.format()}>
+            <SpreadsheetComponent
+                ref={spreadsheetRef}
+                allowSave={true}>
                 <SheetsDirective>
                     <SheetDirective name={'avito'}>
                         <RangesDirective>
@@ -100,7 +123,7 @@ export const Sheet = ({data}) => {
                         </RangesDirective>
                     </SheetDirective>
                 </SheetsDirective>
-            </SpreadsheetComponent>}
+            </SpreadsheetComponent>
         </div>
     )
 }

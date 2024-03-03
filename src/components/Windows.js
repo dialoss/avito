@@ -1,25 +1,23 @@
-import SplitPane, {Pane} from "split-pane-react";
-import {useState} from "react";
+
 import 'split-pane-react/esm/themes/default.css';
 import {Sheet} from "./Sheet";
 import MainContent from "./MainContent";
 import {useSelector} from "react-redux";
+import Split from 'react-split-it';
+import "./Split.scss"
 
 export const Windows = () => {
-    const {data, items} = useSelector(state => state);
-    const [sizes, setSizes] = useState(['50%', '50%'])
-
+    const data = useSelector(state => state.data);
     return (
-        <SplitPane resizerSize={6} split="vertical" sizes={sizes} onChange={setSizes}>
-            <Pane>
+        <div className="windows">
+            <Split gutterSize={8}>
                 <div className="left">
                     <div className="counter_all">Объявлений: {data.count}</div>
-                    <Sheet data={Object.values(items)}></Sheet>
+                    <Sheet></Sheet>
                 </div>
-            </Pane>
-            <Pane>
                 <MainContent></MainContent>
-            </Pane>
-        </SplitPane>
+            </Split>
+        </div>
+
     )
 }

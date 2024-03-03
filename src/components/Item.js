@@ -1,5 +1,6 @@
 import {useEffect, useRef} from "react";
 import "./Item.scss";
+import {User} from "./User";
 
 export const Item = ({data}) => {
     const ref = useRef();
@@ -7,8 +8,7 @@ export const Item = ({data}) => {
         ref.current.style.setProperty("--columns", 3);
     }, []);
     return (
-        <div className="content">
-            {/*<iframe src={data.url}></iframe>*/}
+        <div className="content item">
             <div className="content-top">
                 <div className="title">
                     <p>{data.id}</p>
@@ -34,7 +34,7 @@ export const Item = ({data}) => {
                     <p>{data.description}</p>
                 </div>
                 <div className="images" ref={ref}>{
-                    data.images.map((url, i) => <div key={i} className="wrapper">
+                    data.images.map((url, i) => <div key={i} className="image-wrapper">
                         <img src={url} alt=""/>
                     </div>)
                 }</div>
