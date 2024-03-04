@@ -1,11 +1,14 @@
 import {useState} from "react";
 import "./Messenger.scss"
 import {Button, Stack, TextField, Typography} from "@mui/material";
+import {sendMessage} from "../api/api";
 
 const Phrases = [
     'Здравствуйте! У вас сохранился чек о покупке?',
     'Здравствуйте!',
     'Когда можно посмотреть?',
+    'TOF сенсор работает?',
+    'Сколько держит батарея при обычном использовании?'
 ]
 
 
@@ -13,15 +16,8 @@ export const Messenger = ({item}) => {
     const [message, setMessage] = useState('');
 
     const send = () => {
-        navigator.clipboard.writeText(message).then(() => window.open(item));
-        // if (item) sendMessages([{
-        //     url: item,
-        //     text: message,
-        // }])
-        // else sendMessages(selected.map(id => ({
-        //     url: items[id].url,
-        //     text: message,
-        // })))
+        if (!message) return;
+        sendMessage(message, item.id);
     }
 
     return (
@@ -29,7 +25,7 @@ export const Messenger = ({item}) => {
             <Stack direction={'row'} alignItems={'center'} spacing={1}>
                 <TextField sx={{fontSize: 12, padding: 0, flexGrow: 1}} multiline
                            onChange={e => setMessage(e.target.value)} value={message}
-                           size={'small'} variant="outlined" label={'Сообщение'}/>
+                           size={'small'} variant="standard" label={'Сообщение'}/>
                 <div>
                     <Button type={'submit'} variant="contained" onClick={send}>Отправить</Button>
                 </div>

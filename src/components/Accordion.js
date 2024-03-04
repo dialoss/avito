@@ -13,7 +13,7 @@ export const Accordion = ({body, id, className, title, children}) => {
         if (!content.current) return;
         if (state === undefined) state = active;
         setActive(!state);
-        setHeight(state ? "0px" : `500px`);
+        setHeight(state ? "0px" : `${Math.max(500, content.current.scrollHeight)}px`);
     }
 
     accordions[id] = (s) => toggleAccordion(s);

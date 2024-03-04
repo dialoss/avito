@@ -33,6 +33,7 @@ const Window = ({title, defaultOpened = false, callback=() => {}, children}) => 
             ref={ref}
             noResize
             noMove
+            background={"#1976D2"}
             noClose
             width={200}
             height={50}

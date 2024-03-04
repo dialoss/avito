@@ -16,14 +16,8 @@ import {useDispatch} from "react-redux";
 import {actions} from "../store/app";
 import {store} from "../store";
 import Dislike from "./Dislike";
-import {toDate} from "./tools";
+import {rub, toDate} from "./tools";
 
-const rub = Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: "RUB",
-    maximumFractionDigits: 0,
-    minimumFractionDigits: 0,
-});
 
 
 export const ItemPreview = ({index, data}) => {
@@ -81,7 +75,7 @@ export const ItemPreview = ({index, data}) => {
                 </div>
             </div>
             <Accordion id={data.id} className={'description'} body={data.description} title={'Описание'}></Accordion>
-            <Accordion className={'contact'} body={<Messenger item={data.url}></Messenger>}
+            <Accordion className={'contact'} body={<Messenger item={data}></Messenger>}
                        title={'Связаться'}></Accordion>
         </div>
     )

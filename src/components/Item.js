@@ -1,6 +1,7 @@
 import {useEffect, useRef} from "react";
 import "./Item.scss";
 import {User} from "./User";
+import {toDate} from "./tools";
 
 export const Item = ({data}) => {
     const ref = useRef();
@@ -13,7 +14,7 @@ export const Item = ({data}) => {
                 <div className="title">
                     <p>{data.id}</p>
                     <p>{data.title}</p>
-                    <p>{dayjs(data.timestamp * 1000, 'ru').format("D MMMM YYYY HH:mm", 'ru')}</p>
+                    <p>{toDate(data.timestamp * 1000)}</p>
                 </div>
                 <div className="url"><a target={"_blank"} href={data.url}>AVITO</a></div>
                 <div><p>Город {data.city}</p></div>

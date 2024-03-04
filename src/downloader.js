@@ -1,9 +1,8 @@
 import {fields} from "./config";
 import {COOKIE} from "./tools";
 import axios from "axios";
-import {parse} from "./api/api";
 import {store} from "./store";
-import {actions} from "./store/app";
+import {actions, getStorage} from "./store/app";
 
 function findCoincidence(text, word) {
     let t = text.toLowerCase();
@@ -17,31 +16,80 @@ function findCoincidence(text, word) {
     }
 }
 
+let apiCounter = 0;
+
+class APIEndpoints {
+    constructor(keys = [], endpoint = '', headers = {}, fieldNames = {}, payload = {}, site = "") {
+        this.keys = keys;
+        this.endpoints = keys.map(key => new Endpoint(endpoint, key, fieldNames, payload, headers));
+        this.apiCounter = 0;
+    }
+
+    request(url, request={body:{},headers:{}}, stringify=true) {
+        return this.endpoints[(this.apiCounter++) % this.endpoints.length].request(url, request, stringify);
+    }
+}
+
+class Endpoint {
+    constructor(endpoint, key, fieldNames, payload, headers) {
+        this.key = key;
+        this.endpoint = endpoint;
+        this.fieldNames = fieldNames;
+        this.payload = payload;
+        this.headers = headers;
+    }
+
+    request(url, request={body:{},headers:{}}, stringify=true) {
+        this.payload[this.fieldNames['key']] = this.key;
+        this.payload['url'] = url;
+        const l = !!request.body;
+        let options = {
+            method: l ? 'POST': 'GET',
+            headers: {
+                ...this.headers,
+                ...request.headers,
+            },
+            ...(l ? {body: (stringify ? JSON.stringify(request.body) : request.body)} : {})
+        };
+        return fetch(this.endpoint + '?' + new URLSearchParams(this.payload), options)
+            .then(response => response.text())
+            .then(data => {
+                return data;
+            });
+    }
+}
+
+export const apis = [
+    new APIEndpoints(['5c07f7dcd6c19497a4e74a4024e02569', '5f80d75692079dbd82db12cc6ca8e937', 'a0822455a0b96ebfe83740d1283bb65c', '3a5531fd0d5dee79c425990c1216fae9'], 'https://api.scraperapi.com/', {
+        'accept': '*/*',
+        'cookie': COOKIE
+    }, {
+        'key': 'api_key'
+    }, {
+        'keep_headers': 'true',
+        'device_type': 'desktop'
+    }, 'https://api.scraperapi.com/dashboard'),
+    new APIEndpoints(['ZLPGY3FA2HNBVFEESROXDFWSFKCD5XGEB13IM4O9WA9LN5UR29HB24A81FTKZO9V3BVFHZLJZ7OU620Q', '59D7K2E2B1ISCMSKC3S5E0NB3EV0XISDYQASX7JHFUZB4N3G2488PEENSQYXKJIDWTEVY1Y7U9XY400U', 'HHIV907F7F8Z6ISNEJVTAE14FIBNFR29G4G3PXSC3U1NVGJURTWTQXMTABWG31CT33V5T5RXTAHEMLY4', '16YWZ71HI7HE89WUDAA9W6V3Z4UYZ743U2H6JXGPP8AJTMGPNUSZ8A0W2XYPIFTR0NFCJO8SQQ3FJBJN', 'Z3QZIYV9WGSTK95PDN9J7SU9T0FKWKS7AK1BWXT2SXE087EXKP3EKQJBEE7TR84XJ30HH9ZFSW77B6W0'], 'https://app.scrapingbee.com/api/v1/', {}, {
+        'key': 'api_key',
+        'forward_headers': true,
+    }, {
+        'render_js': 'false', 'cookies': COOKIE, 'forward_headers': true,
+    }, 'https://app.scrapingbee.com/')
+];
+
+const endpoints = apis[0].endpoints.concat(apis[1].endpoints);
+
 async function getData(url) {
     let data = null;
 
-    const headers = {
-        'accept': '*/*',
-        'cookie': COOKIE
-    }
-    const payload = {
-        'api_key': '5c07f7dcd6c19497a4e74a4024e02569',
-        'url': url,
-        'keep_headers': 'true',
-        'device_type': 'desktop'
-    }
-    let params = "";
-    for (const p in payload) params += p + '=' + payload[p] + '&';
-
     while (!data) {
         try {
-            await fetch('https://api.scraperapi.com/?' + params, {
-                headers,
-            }).then(r => r.text()).then(d => {
+            await endpoints[(apiCounter++) % endpoints.length].request(url).then(d => {
                 const str = decodeURIComponent(d.match(/(?<=__initialData__ = ").*?;/)).slice(0, -2);
                 data = JSON.parse(str);
             })
-        } catch (e) {}
+        } catch (e) {
+        }
     }
 
     return data;
@@ -67,7 +115,7 @@ class API {
         this.url = '';
         this.items = {};
         this.keywords_include = keywords_include;
-        this.keywords_exclude = ['магазин', "store", 'треид', 'трейд', 'опт', "сервис", "skupka", "электроника", 'shop', 'дискаунтер', 'trade', "скупка"].concat(keywords_exclude);
+        this.keywords_exclude = getStorage('filters').concat(keywords_exclude);
         const parts = new URL(url);
         if (mobile) {
             this.url = `https://m.avito.ru${parts.pathname}`;

@@ -1,5 +1,6 @@
 .item-list {
     .pagination {
+        display: block;
         position: fixed;
         bottom: 35px;
         left: 0;
@@ -97,6 +98,7 @@
 }
 
 .data-list {
+    padding-bottom: 10px;
     span {
         width: 100%;
     }
@@ -293,3 +295,15 @@ $preview-count: 4;
 .MuiTablePagination-displayedRows {
     justify-self: flex-end;
 }
+
+.MuiAlert-standardSuccess {
+    background-color: rgba(227, 248, 227, 0.94) !important;
+}
+.MuiAlert-standardError {
+    background-color: rgba(253, 237, 237, 0.92) !important;
+}
+.notistack-SnackbarContainer {
+    bottom: 60px !important;
+    width: auto !important;
+}
+

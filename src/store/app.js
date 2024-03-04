@@ -7,6 +7,7 @@ const inital = {
     mapSelected: [],
     initialData: {items: {}},
     displayed: [],
+    removed: {},
 }
 
 export const appSlice = createSlice({
@@ -17,7 +18,7 @@ export const appSlice = createSlice({
             state[field] = data;
         },
         appendData: (state, {payload: data}) => {
-            filterData(data);
+            filterData(data, state.removed);
             const prevItems = {...state.initialData.items};
             const newItems = data.items;
             state.initialData = {...state.initialData, ...data};
@@ -26,7 +27,7 @@ export const appSlice = createSlice({
             state.data.items = Object.values(prevItems).concat(Object.values(newItems));
         },
         setData: (state, {payload: data}) => {
-            filterData(data);
+            filterData(data, state.removed);
             state.initialData = {...data};
             data.items = Object.values(data.items);
             state.data = data;
@@ -45,6 +46,7 @@ export const appSlice = createSlice({
             return inital;
         },
         remove: (state, {payload: id}) => {
+            state.removed[id] = {...state.initialData.items[id]}
             delete state.initialData.items[id];
             const items = state.data.items;
             for (let i = 0; i < items.length; i++) {
@@ -82,10 +84,13 @@ function mergeDeep(target, source) {
     return target;
 }
 
-function filterData(data) {
+function filterData(data, rm) {
     let removed = getStorage('removed');
     for (const id of removed) {
-        if (data.items[id]) delete data.items[id];
+        if (data.items[id]) {
+            rm[id] = {...data.items[id]};
+            delete data.items[id];
+        }
     }
     for (const id of getStorage('liked')) {
         if (data.items[id]) data.items[id].liked = true;
@@ -107,6 +112,7 @@ export function storagePush(name, value) {
     let s = getStorage(name);
     s.push(value)
     setStorage(name, s);
+    return s;
 }
 
 export function storageRemove(name, value) {
