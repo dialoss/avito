@@ -1,12 +1,12 @@
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {ItemPreview} from "./ItemPreview";
-import {TablePagination} from "@mui/material";
+import {Button, TablePagination} from "@mui/material";
 import {useDispatch} from "react-redux";
 import {actions} from "../store/app";
 import {accordions} from "./Accordion";
 
 const Pages = React.forwardRef(({items}, ref) => {
-    const [itemsPerPage, setItemsPerPage] = useState(50);
+    const [itemsPerPage, setItemsPerPage] = useState(25);
 
     const [itemOffset, setItemOffset] = useState(0);
     const endOffset = itemOffset + itemsPerPage;
@@ -31,7 +31,11 @@ const Pages = React.forwardRef(({items}, ref) => {
 
     return (
         <div className="items" ref={ref}>
-            <button className={'expand'} onClick={() => setExpanded(e => !e)}>{expanded ? 'COLLAPSE' : "EXPAND"}</button>
+            {!!currentItems.length && <Button id={'expand'}
+                    variant="contained"
+                    onClick={() => setExpanded(e => !e)}>
+                <p>{expanded ? 'Скрыть' : "Показать"} описания</p>
+            </Button>}
             <div className="items-inner">
                 {
                     currentItems.map((it, i) => <ItemPreview key={it.id} data={it}
@@ -40,8 +44,10 @@ const Pages = React.forwardRef(({items}, ref) => {
             </div>
             <div className="pagination">
                 <TablePagination
+                    labelRowsPerPage={'Показывать'}
                     component="div"
-                    rowsPerPageOptions={[10, 25, 50, 100, 200, 300, 500, 1000]}
+                    // sx={{height:20}}
+                    rowsPerPageOptions={[1000,500,300,200,100,50,25,10]}
                     count={items.length}
                     page={Math.floor(itemOffset / itemsPerPage)}
                     onPageChange={handlePageClick}

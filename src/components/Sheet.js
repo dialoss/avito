@@ -99,7 +99,6 @@ export const Sheet = () => {
 
     useEffect(() => {
         const items = Object.values(data);
-        if (!items.length) return;
         setData(sheetController.init(items, spreadsheetRef));
     }, [data]);
 

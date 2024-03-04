@@ -10,7 +10,7 @@
 
     .items {
         overflow: auto;
-        padding-bottom: 110px;
+        padding-bottom: 80px;
         padding-top: 20px;
     }
 
@@ -96,6 +96,18 @@
     }
 }
 
+.data-list {
+    span {
+        width: 100%;
+    }
+    a {
+        overflow: hidden;
+    }
+    .MuiList-root {
+        max-height: 50vh;
+        overflow-y: auto;
+    }
+}
 
 .swiper-button-next, .swiper-button-prev {
     &::after {
@@ -113,8 +125,10 @@
     background: none !important;
 }
 
-.swiper-pagination.swiper-pagination-fraction.swiper-pagination-horizontal * {
-    background-color: white;
+.swiper-pagination.swiper-pagination-fraction.swiper-pagination-horizontal {
+    bottom: 0;
+    color: #ffffff;
+    background-color: rgba(204, 204, 204, 0.36);
     font-size: 14px;
 }
 
@@ -122,7 +136,7 @@
     background-color: white;
 }
 
-.yarl__container, .yarl__thumbnails_container,.yarl__thumbnails_thumbnail {
+.yarl__container, .yarl__thumbnails_container, .yarl__thumbnails_thumbnail {
     background: none !important;
     padding: 0 !important;
 }
@@ -149,15 +163,54 @@
     overflow: auto;
 
     .current {
-        border: 3px red solid;
+        outline: 3px red solid;
     }
 }
 
-.expand {
+$duration: 0.5s;
+
+#expand {
     z-index: 3;
     position: absolute;
+    left: 0;
+    top: 2px;
+}
+
+#expand.pin {
+    animation: pin $duration ease-in;
+    height: 30px !important;
+    aspect-ratio: 1 / 1;
+    max-width: 30px;
+    position: absolute;
     right: 0;
-    top: 0;
+    top: 2px;
+    border-radius: 50% 0 0 50%;
+
+    p {
+        opacity: 0;
+    }
+}
+
+@keyframes pin-child {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes pin {
+    0% {
+        width: 70%;
+        border-radius: 0;
+    }
+    100% {
+
+        width: 30px;
+        height: 30px;
+        border-radius: 50% 0 0 50%;
+    }
 }
 
 $preview-count: 4;
@@ -166,16 +219,20 @@ $preview-count: 4;
 
     max-height: 100%;
     max-width: calc((100% - ($preview-count - 1) * 4px) / $preview-count) !important;
+
     img {
         width: 100%;
     }
 }
+
 .winbox {
     visibility: hidden;
 }
-.e-sheet-panel{
+
+.e-sheet-panel {
     //height: 700px !important;
 }
+
 .preview-header {
     position: absolute;
     top: 0;
@@ -184,6 +241,7 @@ $preview-count: 4;
     background-color: rgba(107, 107, 107, 0.73);
     z-index: -1;
 }
+
 .preview {
     position: absolute;
     bottom: 0;
@@ -197,12 +255,14 @@ $preview-count: 4;
     max-height: 30vh;
     justify-content: center;
     overflow: auto;
+
     img {
         max-height: 100%;
         max-width: calc((100% - ($preview-count - 1) * 4px) / $preview-count) !important;
     }
+
     .current {
-        border: 3px red solid;
+        outline: 3px red solid;
     }
 }
 
@@ -218,4 +278,18 @@ $preview-count: 4;
 
 .MuiTablePagination-spacer {
     display: none !important;
+}
+
+.MuiToolbar-root {
+    min-height: 30px !important;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.MuiTablePagination-actions {
+    margin-left: 0 !important;
+    justify-self: flex-end;
+}
+.MuiTablePagination-displayedRows {
+    justify-self: flex-end;
 }

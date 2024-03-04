@@ -1,9 +1,9 @@
-import {fields, getUserAgent} from "./config";
+import {fields} from "./config";
 import {COOKIE} from "./tools";
 import axios from "axios";
 import {parse} from "./api/api";
 import {store} from "./store";
-import {actions, storagePush} from "./store/app";
+import {actions} from "./store/app";
 
 function findCoincidence(text, word) {
     let t = text.toLowerCase();
@@ -19,30 +19,31 @@ function findCoincidence(text, word) {
 
 async function getData(url) {
     let data = null;
-    let promise;
-    if (!window.fromServer) {
-        const headers = {
-            'accept': '*/*',
-            'cookie': COOKIE
-        }
-        const payload = {
-            'api_key': '5c07f7dcd6c19497a4e74a4024e02569',
-            'url': url,
-            'keep_headers': 'true',
-            'device_type': 'desktop'
-        }
-        let params = "";
-        for (const p in payload) params += p + '=' + payload[p] + '&';
-        promise = fetch('https://api.scraperapi.com/?' + params, {
-            headers,
-        })
-    } else {
-        promise = parse(url);
+
+    const headers = {
+        'accept': '*/*',
+        'cookie': COOKIE
     }
-    await promise.then(r => r.text()).then(d => {
-        const str = decodeURIComponent(d.match(/(?<=__initialData__ = ").*?;/)).slice(0, -2);
-        data = JSON.parse(str);
-    })
+    const payload = {
+        'api_key': '5c07f7dcd6c19497a4e74a4024e02569',
+        'url': url,
+        'keep_headers': 'true',
+        'device_type': 'desktop'
+    }
+    let params = "";
+    for (const p in payload) params += p + '=' + payload[p] + '&';
+
+    while (!data) {
+        try {
+            await fetch('https://api.scraperapi.com/?' + params, {
+                headers,
+            }).then(r => r.text()).then(d => {
+                const str = decodeURIComponent(d.match(/(?<=__initialData__ = ").*?;/)).slice(0, -2);
+                data = JSON.parse(str);
+            })
+        } catch (e) {}
+    }
+
     return data;
 }
 
@@ -104,54 +105,71 @@ class API {
         }
     }
 }
-let socket = new WebSocket("wss://privet123.pythonanywhere.com/parse");
+
+// const baseURL = "https://privet123.pythonanywhere.com/";
+const baseURL = "http://127.0.0.1:8000/";
+
+
+async function subscribe(data, callback) {
+    const r = await fetch(baseURL + "parse", {
+        body: JSON.stringify(data),
+        headers: {
+            'content-type': 'application/json',
+        },
+        method: "POST"
+    }).catch(er => er).then(r => r.json()).then(d => d);
+    console.log({...r})
+    callback(r);
+    if (r.end) return;
+    await subscribe({}, callback);
+}
 
 class DesktopAPI extends API {
-    async fetch() {
-        let p = 1;
-        let amount = 0;
+    add(items) {
+        store.dispatch(actions.appendData({items, geo: this.geo}));
+    }
 
+    async fetch() {
         if (window.fromServer) {
             return new Promise((resolve) => {
-                socket.onmessage = event => {
-                    const d = JSON.parse(event.data);
-                    if (d.end) {
-                        resolve(d.file);
+                subscribe({url: updateUrl(this.url), limit: window.parseLimit}, data => {
+                    if (data.end) {
+                        resolve(data.file);
                         return;
                     }
-                    store.dispatch(actions.appendData(d))
-                };
-                socket.send(JSON.stringify({url: updateUrl(this.url), limit: window.parseLimit}))
+                    store.dispatch(actions.appendData(data))
+                });
             })
         }
 
-        while (true) {
-            const json_data = await this.api_request(p);
-            const new_items = this.prepare(json_data);
-            const items = {}
-            for (const it of new_items) {
-                this.items[it['id']] = it;
-                items[it['id']] = it;
-            }
-            const d = this.get_data(json_data)["data"];
-            const geo = [d['geoMap']['params']['latitude'], d['geoMap']['params']['longitude']];
-            this.geo = geo;
-            if (!new_items.length || amount >= window.parseLimit) {
-                break;
-            }
-            p += 1;
-            amount += new_items.length;
-            store.dispatch(actions.appendData({items, geo}));
-            await new Promise(r => setTimeout(r, 500));
+        const initData = await this.api_request(1)
+        const items = await this.prepare(initData);
+        const pagesLimit = Math.max(1, Math.floor(window.parseLimit / 50));
+        const d = this.get_data(initData)["data"];
+        const on_page = d['itemsOnPageMainSection']
+        const total = d['mainCount']
+        let ads;
+        if (on_page === 50 && total > 50) ads = total;
+        else ads = on_page;
+        const pages = Math.min(Math.floor(ads / 50) + 1, pagesLimit);
+        console.log('PAGES', pages)
+
+        this.add(items);
+
+        const tasks = [];
+        for (let p = 2; p <= pages; p++) {
+            tasks.push(this.api_request(p).then(data => {
+                this.add(this.prepare(data));
+            }));
         }
-        return new Promise((resolve) => {
+        return Promise.all(tasks).then(() => {
             const data = {
                 'geo': this.geo,
                 'count': Object.values(this.items).length,
                 "items": this.items,
             };
-            upload(JSON.stringify(data)).then(id => resolve(id));
-        })
+            return upload(JSON.stringify(data));
+        });
     }
 
     format_field(item, field) {
@@ -256,7 +274,7 @@ class DesktopAPI extends API {
             return [];
         }
         const items = this.get_data(data)['data']["catalog"]["items"];
-        const prepared_items = [];
+        let prepared = {};
         for (const it of items) {
             if (!it['id']) {
                 continue;
@@ -268,9 +286,12 @@ class DesktopAPI extends API {
             if (!this.process_keywords(new_item)) {
                 continue;
             }
-            prepared_items.push(new_item);
+            this.items[it['id']] = new_item;
+            prepared[it['id']] = new_item;
         }
-        return prepared_items;
+        const d = this.get_data(data)['data'];
+        this.geo = [d['geoMap']['params']['latitude'], d['geoMap']['params']['longitude']];
+        return prepared;
     }
 }
 

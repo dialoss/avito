@@ -1,29 +1,10 @@
 .data-fetch {
-    position: fixed;
-    left: 0;
-    width: 100%;
-    top: 0;
-    z-index: 10;
-    .input-url {
-        width: 100%;
-    }
+    padding: 4px;
 }
-
-.list {
-    p {
-        font-size: 20px;
-        font-weight: 600;
-    }
-    ul {
-        max-height: 50vh;
-        overflow: auto;
-    }
-    li {
-        font-size: 16px;
-        padding: 4px 0;
-        border-bottom: 1px solid black;
-        &:focus {
-            background-color: grey;
+.previous-parse {
+    overflow: hidden;
+    a {
+        display: block;
+        //text-decoration: none;
         }
-    }
 }

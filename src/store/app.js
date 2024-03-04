@@ -1,15 +1,17 @@
 import {createSlice} from '@reduxjs/toolkit'
 
+const inital = {
+    selected: [],
+    current: 0,
+    data: {items: []},
+    mapSelected: [],
+    initialData: {items: {}},
+    displayed: [],
+}
+
 export const appSlice = createSlice({
     name: 'app',
-    initialState: {
-        selected: [],
-        current: 0,
-        data: {items: []},
-        mapSelected: [],
-        initialData: {items: {}},
-        displayed: [],
-    },
+    initialState: inital,
     reducers: {
         setField: (state, {payload: {field, data}}) => {
             state[field] = data;
@@ -38,6 +40,9 @@ export const appSlice = createSlice({
         },
         setVisible: (state, {payload: items}) => {
             state.data.items = items.map(id => state.initialData.items[id]);
+        },
+        clear: (state) => {
+            return inital;
         },
         remove: (state, {payload: id}) => {
             delete state.initialData.items[id];

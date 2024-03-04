@@ -23,6 +23,7 @@ class YMap {
             this.objectManager = new window.ymaps.ObjectManager({
                 gridSize: 32,
             });
+            this.addMarkers(data.items);
             this.objectManager.objects.events.add('click', e => {
                 const id = e.get('objectId');
                 this.selectMarker(id, false);
@@ -32,12 +33,12 @@ class YMap {
         });
     }
 
-    replaceMarkers(data) {
-        this.removeAllMarkers();
-        this.addMarkers(data.items);
+    async replaceMarkers(data) {
+        await this.removeAllMarkers();
+        await this.addMarkers(data.items);
     }
 
-    removeAllMarkers() {
+    async removeAllMarkers() {
         this.objectManager && this.objectManager.removeAll();
     }
 
@@ -45,11 +46,11 @@ class YMap {
         this.objectManager.remove(items.map(it => this.createMarker(it)))
     }
 
-    addMarkers(items) {
+    async addMarkers(items) {
         this.objectManager && this.objectManager.add(items.map(it => this.createMarker(it)))
     }
 
-    selectMarker(id, center) {
+    async selectMarker(id, center) {
         if (this.prevSelected === id) return;
         this.objectManager.objects.setObjectOptions(id, {
             preset: 'islands#redIcon',

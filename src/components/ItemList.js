@@ -13,6 +13,7 @@ import Pages from "./Pages";
 export const ItemList = () => {
     const current = useSelector(state => state.current);
     const items = useSelector(state => state.data.items);
+    const fetching = useSelector(state => state.fetching);
     useLayoutEffect(() => {
         const prev = document.querySelector('.item-preview.selected');
         if (prev) prev.classList.remove('selected');
@@ -34,7 +35,7 @@ export const ItemList = () => {
     const ref = useRef(null);
     return (
         <div className={'item-list'}>
-            <div className="counter_all">Объявлений: {items.length}</div>
+            <div className="counter_all">{`Объявлений: ${items.length}`}</div>
             <Split gutterSize={10} direction={'vertical'} sizes={sizes} minSize={100} onSetSizes={e => {
                 onSplit(e);
                 map && map.resize();
@@ -42,7 +43,7 @@ export const ItemList = () => {
                 <Map></Map>
                 <Pages ref={ref} items={items}></Pages>
             </Split>
-            <Window title={'EXCEL'} x={'left'} defaultOpened={true}><Sheet></Sheet></Window>
+            <Window title={'EXCEL   '} x={'left'} defaultOpened={true}><Sheet></Sheet></Window>
             <Images></Images>
         </div>
     )

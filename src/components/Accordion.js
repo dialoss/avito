@@ -13,17 +13,18 @@ export const Accordion = ({body, id, className, title, children}) => {
         if (!content.current) return;
         if (state === undefined) state = active;
         setActive(!state);
-        setHeight(state ? "0px" : `${content.current.scrollHeight}px`);
+        setHeight(state ? "0px" : `500px`);
     }
 
     accordions[id] = (s) => toggleAccordion(s);
     return (
-        <div className={"accordion__section"} onClick={e => {
-            e.stopPropagation();
-            toggleAccordion(active);
-        }}>
+        <div className={"accordion__section"}>
             <div
                 className={`accordion ${className} ${active ? "active" : ""}`}
+                onClick={e => {
+                    e.stopPropagation();
+                    toggleAccordion(active);
+                }}
             >
                 <p className="accordion__title">{title}</p>
                 <span style={{marginLeft: "20px"}}>{active ? "-" : "+"}</span>

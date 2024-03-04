@@ -1,11 +1,11 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import 'winbox/dist/css/winbox.min.css'; // required
 import 'winbox/dist/css/themes/modern.min.css'; // optional
 import 'winbox/dist/css/themes/white.min.css'; // optional
 import WinBox from 'react-winbox';
 
 
-const Window = ({title, defaultOpened = false, children}) => {
+const Window = ({title, defaultOpened = false, callback=() => {}, children}) => {
     const ref = useRef();
     const [opened, setOpened] = useState(defaultOpened);
     const openedRef = useRef();
@@ -23,6 +23,10 @@ const Window = ({title, defaultOpened = false, children}) => {
             for (const el of [...document.querySelectorAll('.winbox')]) el.style.visibility = 'visible';
         }, 100)
     }, []);
+
+    useLayoutEffect(()=>{
+        callback(opened);
+    }, [opened])
 
     return (
         <WinBox
