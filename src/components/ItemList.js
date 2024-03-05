@@ -7,7 +7,7 @@ import Split from 'react-split-it';
 import "./Split.scss"
 import Window from "./Window";
 import {Sheet} from "./Sheet";
-import Images from "./Photos";
+import Images, {SimpleViewer} from "./Photos";
 import Pages from "./Pages";
 
 export const ItemList = () => {
@@ -47,6 +47,7 @@ export const ItemList = () => {
             </Split>
             <Window title={'EXCEL   '} x={'left'} defaultOpened={true}><Sheet></Sheet></Window>
             <Images></Images>
+            <SimpleViewer></SimpleViewer>
         </div>
     )
 }

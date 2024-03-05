@@ -3,9 +3,9 @@ import {fetchData} from "../api/api";
 import './DataFetch.scss'
 import {useDispatch, useSelector} from "react-redux";
 import {start} from "../downloader";
-import {SnackbarProvider, useSnackbar} from 'notistack';
-import Alert from '@mui/material/Alert';
+import {ToastContainer, toast, Bounce} from 'react-toastify';
 
+import 'react-toastify/dist/ReactToastify.min.css';
 import {Button, Link, ListItem, Stack, TextField, Typography} from "@mui/material";
 import {rub, toDate} from "./tools";
 import DataList, {ModifiableList} from "./DataList";
@@ -38,10 +38,11 @@ export const DataFetch = () => {
                 dispatch(actions.clear());
                 start(url)
                     .then(id => {
+                        setParsing(false);
+                        if (!id) return;
                         let s = window.location.href.replace(window.location.search, '');
                         s += '?id=' + id;
                         window.history.pushState({}, "", s);
-                        setParsing(false);
                         const d = {id, url, date: new Date().getTime()};
                         setHistory([...history, d]);
                         triggerEvent('alert', {message: 'Загрузка завершена!', type: 'success'})
@@ -117,31 +118,23 @@ function RemovedPreview({data}) {
     )
 }
 
-function MyAlert() {
-    const {enqueueSnackbar} = useSnackbar();
-
+export function Alerts() {
     useAddEvent('alert', (d) => {
-        enqueueSnackbar(d.detail.message, {variant: d.detail.type})
+        toast(d.detail.message, {type: d.detail.type,pauseOnHover: false})
     });
     return (
-        <></>
+        <ToastContainer
+            position="bottom-left"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            closeButton={false}
+            pauseOnFocusLoss={false}
+            draggable
+            pauseOnHover={false}
+            theme="colored"
+            transition={Bounce}></ToastContainer>
     )
-}
-
-const DownloadComplete = React.forwardRef((props, ref) => {
-    const {message, variant} = props;
-
-    return (
-        <Alert ref={ref} severity={variant}>{message}</Alert>
-    )
-})
-
-export function Alerts() {
-    return (
-        <SnackbarProvider Components={{success: DownloadComplete, error: DownloadComplete}}
-                          transitionDuration={300}
-                          autoHideDuration={3500} maxSnack={5}>
-            <MyAlert></MyAlert>
-        </SnackbarProvider>
-    );
 }

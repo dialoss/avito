@@ -47,7 +47,8 @@ export function getStorage(name, defaultValue='[]') {
     if (!localStorage.getItem(name)) {
         localStorage.setItem(name, defaultValue);
     }
-    return JSON.parse(localStorage.getItem(name));
+    const v = localStorage.getItem(name);
+    return JSON.parse(v);
 }
 
 export function useGetStorage(name) {

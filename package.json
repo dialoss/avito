@@ -34,6 +34,7 @@
     "react-simple-image-slider": "^2.4.1",
     "react-split-it": "^2.0.0",
     "react-split-pane": "^2.0.3",
+    "react-toastify": "^10.0.4",
     "react-virtualized": "^9.22.5",
     "react-virtualized-auto-sizer": "^1.0.23",
     "react-winbox": "^1.5.0",

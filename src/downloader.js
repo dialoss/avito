@@ -27,8 +27,8 @@ class APIEndpoints {
         this.apiCounter = 0;
     }
 
-    request(url, request = {body: {}, headers: {}}, stringify = true) {
-        return this.endpoints[(this.apiCounter++) % this.endpoints.length].request(url, request, stringify);
+    request(url, request = {body: {}, headers: {}}, stringify = true, message='') {
+        return this.endpoints[(this.apiCounter++) % this.endpoints.length].request(url, request, stringify, message);
     }
 }
 
@@ -41,7 +41,7 @@ class Endpoint {
         this.headers = headers;
     }
 
-    request(url, request = {body: {}, headers: {}}, stringify = true, mobile=false) {
+    request(url, request = {body: {}, headers: {}}, stringify = true, mobile=false, message='') {
         this.payload[this.fieldNames['key']] = this.key;
         this.payload[this.fieldNames['device']] = mobile ? 'mobile' : 'desktop';
         this.payload['url'] = url;
@@ -50,13 +50,17 @@ class Endpoint {
         let options = {
             method,
             headers: {
+
                 ...this.headers,
                 ...request.headers,
             },
             ...(method === 'POST' ? {body: (stringify ? JSON.stringify(request.body) : request.body)} : {})
         };
         console.log(options)
-        return fetch(this.endpoint + '?' + new URLSearchParams(this.payload), options);
+        return fetch(this.endpoint + '?' + new URLSearchParams(this.payload), options).catch(er => triggerEvent('alert', {
+            type: "error",
+            message: message || 'Ошибка',
+        }))
     }
 }
 
@@ -76,17 +80,22 @@ export const apis = [
         'device': 'device',
     }, {
         'render_js': 'false', 'cookies': COOKIE, 'forward_headers': true,'device': 'desktop',
-    }, 'https://app.scrapingbee.com/')
+    }, 'https://app.scrapingbee.com/'),
+    new APIEndpoints(['815cfdc4cfa8453fb70bf25bbb03c169','98155c6a44ab4ec29f6d1a3a23dc9d96','da056a6fd38d4c6684b55e67a6bcdab9',
+    '70f5df5b924e4c75a47de0d00c728753','009fce480b8f4c86a2ea7ca76a37e18c'],'https://api.scrapingant.com/v2/general',{},{
+        'key':'x-api-key',
+    },{
+        'browser': false, 'cookies': COOKIE,
+    })
 ];
 
-// const endpoints = apis[0].endpoints.concat(apis[1].endpoints);
-const endpoints = apis[0].endpoints;
+const endpoints = apis[2].endpoints;
 
 async function apiRequest(url) {
     let data = null;
     console.log(url)
     let cnt = 0;
-    while (!data || cnt > 3) {
+    while (!data && cnt < 3) {
         try {
             await endpoints[(apiCounter++) % endpoints.length].request(url).then(d => data = d);
         }
@@ -162,24 +171,6 @@ class API {
     }
 }
 
-// const baseURL = "https://privet123.pythonanywhere.com/";
-const baseURL = "http://127.0.0.1:8000/";
-
-
-async function subscribe(data, callback) {
-    const r = await fetch(baseURL + "parse", {
-        body: JSON.stringify(data),
-        headers: {
-            'content-type': 'application/json',
-        },
-        method: "POST"
-    }).catch(er => er).then(r => r.json()).then(d => d);
-    console.log({...r})
-    callback(r);
-    if (r.end) return;
-    await subscribe({}, callback);
-}
-
 class DesktopAPI extends API {
     add(items) {
         store.dispatch(actions.appendData({items, geo: this.geo}));
@@ -202,7 +193,7 @@ class DesktopAPI extends API {
         if (on_page === 50 && total > 50) ads = total;
         else ads = on_page;
         const pages = Math.min(Math.floor(ads / 50) + 1, pagesLimit);
-        console.log('PAGES', pages)
+        console.log('PAGES', pages, window.parseLimit, total)
 
         this.add(items);
 
@@ -372,9 +363,7 @@ export async function start(url) {
 
 export function fetchDetails(id) {
     const api = `https://m.avito.ru/api/19/items/`;
-    return apis[1].endpoints[0]
+    return apis[2]
         .request(api + id + "?key=af0deccbgcgidddjgnvljitntccdduijhdinfgjgfjir&action=view",  {body: {}, headers: {}},false, true)
         .then(r => r.json())
 }
-
-window.fetchDetails = fetchDetails

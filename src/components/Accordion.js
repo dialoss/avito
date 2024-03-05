@@ -10,13 +10,11 @@ export const Accordion = ({id, className, title, callback=()=>{}, children}) => 
     const [height, setHeight] = useState("0px");
 
     function toggleAccordion(state) {
-        if (!content.current) return;
         if (state === undefined) state = active;
         setActive(!state);
         if (!state) callback();
-        setHeight(state ? "0px" : `${Math.max(500, content.current.scrollHeight)}px`);
+        setHeight(state ? "0px" : 'auto');
     }
-
     accordions[id] = (s) => toggleAccordion(s);
     return (
         <div className={"accordion__section"}>
@@ -30,13 +28,13 @@ export const Accordion = ({id, className, title, callback=()=>{}, children}) => 
                 <p className="accordion__title">{title}</p>
                 <span style={{marginLeft: "20px"}}>{active ? "-" : "+"}</span>
             </div>
-            <div
+            {active && <div
                 ref={content}
                 style={{maxHeight: `${height}`}}
                 className="accordion__content"
             >
                 <div className="accordion__text">{children}</div>
-            </div>
+            </div>}
         </div>
     );
 }

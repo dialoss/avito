@@ -2,10 +2,17 @@
     padding: 4px;
     padding-bottom: 40px;
 }
+
 .previous-parse {
     overflow: hidden;
+
     a {
         display: block;
-        //text-decoration: none;
-        }
+    }
+}
+
+.data-page {
+    img {
+        max-width: 50%;
+    }
 }

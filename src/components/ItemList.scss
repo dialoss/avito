@@ -11,7 +11,7 @@
 
     .items {
         overflow: auto;
-        padding-bottom: 80px;
+        padding-bottom: 90px;
         padding-top: 20px;
     }
 
@@ -138,36 +138,40 @@
     background-color: white;
 }
 
-.yarl__container, .yarl__thumbnails_container, .yarl__thumbnails_thumbnail {
-    background: none !important;
-    padding: 0 !important;
-}
+.images-viewer {
 
-.yarl__navigation_next {
-    padding-right: 0 !important;
-}
+    .yarl__container, .yarl__thumbnails_container, .yarl__thumbnails_thumbnail {
+        background: none !important;
+        padding: 0 !important;
+    }
 
-.yarl__navigation_prev {
-    padding-left: 0 !important;
-}
+    .yarl__navigation_next {
+        padding-right: 0 !important;
+    }
 
-.yarl__thumbnails_track {
-    width: 100vw;
-    flex-wrap: wrap;
+    .yarl__navigation_prev {
+        padding-left: 0 !important;
+    }
 
-    background-color: white;
-    z-index: 1;
-    display: flex;
-    row-gap: 4px;
-    column-gap: 4px;
-    max-height: 30vh;
-    justify-content: center;
-    overflow: auto;
+    .yarl__thumbnails_track {
+        width: 100vw;
+        flex-wrap: wrap;
 
-    .current {
-        outline: 3px red solid;
+        background-color: white;
+        z-index: 1;
+        display: flex;
+        row-gap: 4px;
+        column-gap: 4px;
+        max-height: 30vh;
+        justify-content: center;
+        overflow: auto;
+
+        .current {
+            outline: 3px red solid;
+        }
     }
 }
+
 
 $duration: 0.5s;
 
@@ -217,22 +221,8 @@ $duration: 0.5s;
 
 $preview-count: 4;
 
-.yarl__thumbnails_thumbnail {
-
-    max-height: 100%;
-    max-width: calc((100% - ($preview-count - 1) * 4px) / $preview-count) !important;
-
-    img {
-        width: 100%;
-    }
-}
-
 .winbox {
     visibility: hidden;
-}
-
-.e-sheet-panel {
-    //height: 700px !important;
 }
 
 .preview-header {
@@ -326,4 +316,14 @@ $preview-count: 4;
     button {
         height: 40px !important;
     }
+}
+
+:root {
+    --toastify-color-success: rgba(7, 188, 12, 0.93) !important;
+    --toastify-color-error: rgba(231, 76, 60, 0.9) !important;
+}
+
+.Toastify__toast-container {
+    bottom: 60px !important;
+    max-width: 70% !important;
 }

@@ -18,7 +18,7 @@ class Auth {
 
     static async getToken() {
         if (Auth.token) return Auth.token;
-        return await apis[1].request('https://api.avito.ru/token', {
+        return await apis[2].request('https://api.avito.ru/token', {
             headers: {},
             method:"POST",
             body: new URLSearchParams({
@@ -48,7 +48,7 @@ export async function getChatID(adID) {
             "source": "details-item"
         }
     };
-    const p = apis[0].request(url, {body: data, headers: {}}).then(r => r.json());
+    const p = apis[2].request(url, {body: data, headers: {}}).then(r => r.json());
     chats[adID] = p;
     return p;
 }
@@ -58,7 +58,7 @@ export async function sendMessage(message, id) {
         const token = await Auth.getToken();
         Promise.all([chats[id]]).then(d => {
             const chatID = d[0].result.channelId;
-            apis[1].request(`https://api.avito.ru/messenger/v1/accounts/${328145761}/chats/${chatID}/messages`, {
+            apis[2].request(`https://api.avito.ru/messenger/v1/accounts/${328145761}/chats/${chatID}/messages`, {
                 headers: {
                     'content-type': 'application/json',
                     "Authorization": "Bearer " + token,
@@ -80,7 +80,7 @@ export async function sendMessage(message, id) {
 
 export function toggleLike(state, id) {
     let endpoint = state ? 'add' : 'delete';
-    apis[1].request('https://www.avito.ru/web/1/favorites/items/' + endpoint, {
+    apis[2].request('https://www.avito.ru/web/1/favorites/items/' + endpoint, {
         body: {
             "ids": [id],
             "x": "sralu8yv1l4nhv1m0zrw71p6btcjwmw",
