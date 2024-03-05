@@ -174,7 +174,7 @@ $duration: 0.5s;
 #expand {
     z-index: 3;
     position: absolute;
-    left: 0;
+    left: 4px;
     top: 2px;
 }
 
@@ -242,6 +242,7 @@ $preview-count: 4;
     height: 65px;
     background-color: rgba(107, 107, 107, 0.73);
     z-index: -1;
+
 }
 
 .preview {
@@ -250,13 +251,24 @@ $preview-count: 4;
     background-color: white;
     z-index: 1;
     width: 100vw;
-    display: flex;
-    flex-wrap: wrap;
-    row-gap: 4px;
-    column-gap: 4px;
+
     max-height: 30vh;
-    justify-content: center;
     overflow: auto;
+
+    &-inner {
+        padding: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        row-gap: 4px;
+        column-gap: 4px;
+        justify-content: center;
+        align-items: flex-start;
+    }
+    button {
+        height: 30px;
+        display: block;
+        margin: 0 auto;
+    }
 
     img {
         max-height: 100%;
@@ -267,7 +279,11 @@ $preview-count: 4;
         outline: 3px red solid;
     }
 }
-
+.yarl__carousel {
+    img {
+        max-height: 80vh !important;
+    }
+}
 .winbox.min {
     bottom: 0 !important;
     top: auto !important;
@@ -306,4 +322,8 @@ $preview-count: 4;
     bottom: 60px !important;
     width: auto !important;
 }
-
+.MuiTablePagination-actions {
+    button {
+        height: 40px !important;
+    }
+}

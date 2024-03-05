@@ -7,7 +7,7 @@ import Split from 'react-split-it';
 import "./Split.scss"
 
 export const Windows = () => {
-    const data = useSelector(state => state.data);
+    const data = useSelector(state => state.app.data);
     return (
         <div className="windows">
             <Split gutterSize={8}>

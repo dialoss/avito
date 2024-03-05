@@ -1,4 +1,5 @@
 import {createSlice} from '@reduxjs/toolkit'
+import {getStorage, storagePush} from "./localStorage";
 
 const inital = {
     selected: [],
@@ -45,6 +46,17 @@ export const appSlice = createSlice({
         clear: (state) => {
             return inital;
         },
+        updateItem: (state, {payload: {data, field}}) => {
+            if (!field) {
+                state.initialData.items[data.id] = data;
+            }
+            else {
+                state.initialData.items[data.id][field] = data[field];
+                state.data.items.forEach((it, i) => {
+                    if (it['id'] === data.id) state.data.items[i] = {...state.data.items[i], [field]: data};
+                })
+            }
+        },
         remove: (state, {payload: id}) => {
             state.removed[id] = {...state.initialData.items[id]}
             delete state.initialData.items[id];
@@ -54,35 +66,12 @@ export const appSlice = createSlice({
                     items.splice(i, 1)
                 }
             }
-            storagePush('removed', id);
         }
     }
 })
 
 export const {actions, reducer} = appSlice;
 
-function mergeDeep(target, source) {
-    const isObject = (obj) => obj && typeof obj === 'object';
-
-    if (!isObject(target) || !isObject(source)) {
-        return source;
-    }
-
-    Object.keys(source).forEach(key => {
-        const targetValue = target[key];
-        const sourceValue = source[key];
-
-        if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
-            target[key] = targetValue.concat(sourceValue);
-        } else if (isObject(targetValue) && isObject(sourceValue)) {
-            target[key] = mergeDeep(Object.assign({}, targetValue), sourceValue);
-        } else {
-            target[key] = sourceValue;
-        }
-    });
-
-    return target;
-}
 
 function filterData(data, rm) {
     let removed = getStorage('removed');
@@ -95,29 +84,4 @@ function filterData(data, rm) {
     for (const id of getStorage('liked')) {
         if (data.items[id]) data.items[id].liked = true;
     }
-}
-
-export function getStorage(name) {
-    if (!localStorage.getItem(name)) {
-        localStorage.setItem(name, '[]');
-    }
-    return JSON.parse(localStorage.getItem(name));
-}
-
-export function setStorage(name, data) {
-    localStorage.setItem(name, JSON.stringify(data));
-}
-
-export function storagePush(name, value) {
-    let s = getStorage(name);
-    s.push(value)
-    setStorage(name, s);
-    return s;
-}
-
-export function storageRemove(name, value) {
-    let s = getStorage(name);
-    s.splice(s.indexOf(value), 1);
-    setStorage(name, s);
-    return s
 }

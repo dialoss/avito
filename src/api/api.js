@@ -1,6 +1,6 @@
-import {getStorage, setStorage, storagePush, storageRemove} from "../store/app";
 import {apis} from "../downloader";
 import {triggerEvent} from "../hooks";
+import {storagePush, storageRemove} from "../store/localStorage";
 
 export function fetchData() {
     const location = new URLSearchParams(new URL(window.location).search).get('id');
@@ -8,31 +8,6 @@ export function fetchData() {
         return fetch(`https://res.cloudinary.com/dgkwlszta/raw/upload/${location}.json`)
             .then(r => r.json()).then(d => d);
 
-}
-
-export async function parse(url) {
-    let data = null;
-    await fetch(`https://privet123.pythonanywhere.com/parse`,{
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({url})
-    })
-        .then(r => data = r)
-        .catch(er => alert(er));
-    return data;
-}
-
-export function sendMessages(messages) {
-    fetch('https://valued-horse-awake.ngrok-free.app/send', {
-        method: "POST",
-        headers: {
-            'ngrok-skip-browser-warning': '1',
-            "content-type": "application/json"
-        },
-        body: JSON.stringify(messages)
-    }).catch(er => alert(er))
 }
 
 const CLIENT_SECRET = '1YEIDQh_crlmwGWSiBIZF9_s4vPPG4uW7bu91MB8';
@@ -51,30 +26,38 @@ class Auth {
                 'client_id': CLIENT_ID,
                 'grant_type': 'client_credentials'
             })
-        }, false).then(r => {
-            let d = JSON.parse(r);
+        }, false).then(r => r.json()).then(d => {
+            console.log(d)
             Auth.token = d.access_token;
             return Auth.token;
         })
     }
 }
 
+export const chats = {};
+
+export async function getChatID(adID) {
+    if (chats[adID]) return;
+    let url = "https://socket.avito.ru/fallback?app_name=mav";
+    const data = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "avito.chatCreateByItemId.v2",
+        "params": {
+            "itemId": adID,
+            "source": "details-item"
+        }
+    };
+    const p = apis[0].request(url, {body: data, headers: {}}).then(r => r.json());
+    chats[adID] = p;
+    return p;
+}
+
 export async function sendMessage(message, id) {
     try {
         const token = await Auth.getToken();
-        let url = "https://socket.avito.ru/fallback?app_name=mav";
-        const data = {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "avito.chatCreateByItemId.v2",
-            "params": {
-                "itemId": id,
-                "source": "details-item"
-            }
-        };
-        apis[1].request(url, {body: data, headers: {}}).then(r => {
-            const d = JSON.parse(r);
-            const chatID = d.result.channelId;
+        Promise.all([chats[id]]).then(d => {
+            const chatID = d[0].result.channelId;
             apis[1].request(`https://api.avito.ru/messenger/v1/accounts/${328145761}/chats/${chatID}/messages`, {
                 headers: {
                     'content-type': 'application/json',
@@ -103,7 +86,7 @@ export function toggleLike(state, id) {
             "x": "sralu8yv1l4nhv1m0zrw71p6btcjwmw",
             "fromPage": "catalog"
         },
-        headers: {}
+        headers: {},
     }).catch(er => alert(er)).then(r => {
         if (state) storagePush('liked', id);
         else storageRemove('liked', id);

@@ -5,8 +5,8 @@ import { useSelector, useDispatch } from 'react-redux'
 import {Item} from "./Item";
 
 const MainContent = () => {
-    const current = useSelector(state => state.current);
-    const items = useSelector(state => state.data.items);
+    const current = useSelector(state => state.app.current);
+    const items = useSelector(state => state.app.data.items);
     return (
         <div className="right">
             <Map></Map>

@@ -29,11 +29,3 @@ export const ru = {
 }
 
 export const fields = ['id', 'description', 'title', 'iva', 'coords', 'badges', 'sortTimeStamp', 'images', 'urlPath', 'stats', 'priceDetailed'];
-
-
-let UserAgents = [];
-fetch('user-agents.txt').then(r=>r.text()).then(d => UserAgents = d.split('\n').filter(s => s.match(/windows|Macintosh|ubuntu/i)));
-
-export function getUserAgent() {
-    return UserAgents[Math.max(0, Math.floor(Math.random() * UserAgents.length) - 1)];
-}

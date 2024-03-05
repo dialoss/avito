@@ -60,7 +60,7 @@ class YMap {
             this.unselectMarker(this.prevSelected);
         }
         this.prevSelected = id;
-        if (center) this._map.setCenter(store.getState().initialData.items[id].coords);
+        if (center) this._map.setCenter(store.getState().app.initialData.items[id].coords);
     }
 
     unselectMarker(id) {
@@ -90,9 +90,6 @@ class YMap {
                 coordinates: data.coords,
             },
             properties: {
-                // balloonContentHeader: data.tdatale,
-                // balloonContentBody: data.price,
-                // balloonContentFooter: window.dayjs(data.timestamp * 1000, 'ru').format("D MMMM YYYY HH:mm", 'ru'),
                 iconCaption: data.price,
                 hintContent: data.title + '\n' + data.price,
             }
@@ -107,9 +104,9 @@ class YMap {
 export let map = null;
 
 export const Map = () => {
-    const data = useSelector(state => state.data);
-    const selected = useSelector(state => state.mapSelected);
-    const displayed = useSelector(state => state.displayed);
+    const data = useSelector(state => state.app.data);
+    const selected = useSelector(state => state.app.mapSelected);
+    const displayed = useSelector(state => state.app.displayed);
 
     useEffect(() => {
         if (!data.geo || map) return;

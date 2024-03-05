@@ -11,12 +11,14 @@ import 'swiper/css/thumbs';
 import 'swiper/css/pagination';
 import 'swiper/css/scrollbar';
 import {useRef} from "react";
-import {toggleLike} from "../api/api";
+import {getChatID, toggleLike} from "../api/api";
 import {useDispatch} from "react-redux";
 import {actions} from "../store/app";
 import {store} from "../store";
 import Dislike from "./Dislike";
 import {rub, toDate} from "./tools";
+import {storagePush} from "../store/localStorage";
+import {triggerEvent} from "../hooks";
 
 
 
@@ -26,6 +28,7 @@ export const ItemPreview = ({index, data}) => {
     function dislike(e) {
         e.stopPropagation();
         store.dispatch(actions.remove(data.id));
+        storagePush('removed', data.id);
     }
 
     const dispatch = useDispatch();
@@ -68,15 +71,20 @@ export const ItemPreview = ({index, data}) => {
                             data.images.map((im, i) => <SwiperSlide key={i}>
                                 <div className={'swiper__image-wrapper'}>
                                     <img src={Object.values(im)[0]} alt=""
-                                         onClick={() => window.openViewer(data.images, i)}/></div>
+                                         onClick={() => triggerEvent('images:open', {images:data.images, start:i, id:data.id})}/></div>
                             </SwiperSlide>)
                         }
                     </Swiper>
                 </div>
             </div>
-            <Accordion id={data.id} className={'description'} body={data.description} title={'Описание'}></Accordion>
-            <Accordion className={'contact'} body={<Messenger item={data}></Messenger>}
-                       title={'Связаться'}></Accordion>
+            <Accordion id={data.id} className={'description'} title={'Описание'}>
+                {data.description}
+            </Accordion>
+            <Accordion className={'contact'}
+                       callback={() => getChatID(data.id)}
+                       title={'Связаться'}>
+                {<Messenger item={data}></Messenger>}
+            </Accordion>
         </div>
     )
 }

@@ -4,7 +4,7 @@ import "./Accordion.scss";
 
 export const accordions = {}
 
-export const Accordion = ({body, id, className, title, children}) => {
+export const Accordion = ({id, className, title, callback=()=>{}, children}) => {
     const [active, setActive] = useState(false);
     const content = useRef(null);
     const [height, setHeight] = useState("0px");
@@ -13,6 +13,7 @@ export const Accordion = ({body, id, className, title, children}) => {
         if (!content.current) return;
         if (state === undefined) state = active;
         setActive(!state);
+        if (!state) callback();
         setHeight(state ? "0px" : `${Math.max(500, content.current.scrollHeight)}px`);
     }
 
@@ -34,7 +35,7 @@ export const Accordion = ({body, id, className, title, children}) => {
                 style={{maxHeight: `${height}`}}
                 className="accordion__content"
             >
-                <div className="accordion__text">{body}{children}</div>
+                <div className="accordion__text">{children}</div>
             </div>
         </div>
     );

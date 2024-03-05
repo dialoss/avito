@@ -11,6 +11,18 @@ import {store} from "../store";
 import {ru, tableFields} from "../config";
 import {formatField} from "../tools";
 import {useSelector} from "react-redux";
+import { L10n } from '@syncfusion/ej2-base';
+
+L10n.load({
+    'ru-RU': {
+        'spreadsheet': {
+            'File': 'Файл',
+            'SaveAs': 'Сохранить как',
+            'SortAscending': 'По возрастанию',
+            'SortDescending': 'По убыванию'
+        }
+    }
+});
 
 class SheetController {
     sheetRef = null;
@@ -33,12 +45,23 @@ class SheetController {
     format() {
         if (!this.sheetRef) return;
         const sh = this.sheetRef.current;
-        sh.cellFormat({fontWeight: "bold"}, `A1:T1`);
-        sh.setRowsHeight(20);
-        sh.setColumnsWidth(150, ['H']);
-        sh.setColumnsWidth(1, ['A']);
         sh.select = (args) => this.select(args);
-        sh.applyFilter([{field: "H", predicate: '', operator: 'notequal', value: ''}]);
+        const sizes = () => {
+            sh.cellFormat({fontWeight: "bold"}, `A1:T1`);
+            sh.setRowsHeight(20);
+            sh.setColumnsWidth(150, ['H']);
+            sh.setColumnsWidth(1, ['A']);
+        }
+        const trySet = setInterval(() => {
+            try {
+                sizes();
+                clearInterval(trySet);
+                setTimeout(()=>{
+                    sh.applyFilter([{field: "H", predicate: '', operator: 'notequal', value: ''}]);
+                }, 500)
+            } catch (e) {
+            }
+        }, 500);
     }
 
     fillRow(row) {
@@ -78,7 +101,7 @@ let sheetController = new SheetController();
 window.sh = sheetController
 
 export const Sheet = () => {
-    const data = useSelector(state => state.initialData.items);
+    const data = useSelector(state => state.app.initialData.items);
     const spreadsheetRef = useRef(null);
     const [formattedData, setData] = useState([]);
 
@@ -113,8 +136,11 @@ export const Sheet = () => {
     return (
         <div className={'sheet'}>
             <SpreadsheetComponent
+                locale={'ru-RU'}
                 ref={spreadsheetRef}
-                allowSave={true}>
+                allowSave={true}
+                saveUrl='https://services.syncfusion.com/js/production/api/spreadsheet/save'
+            >
                 <SheetsDirective>
                     <SheetDirective name={'avito'}>
                         <RangesDirective>

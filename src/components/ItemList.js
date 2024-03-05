@@ -11,16 +11,18 @@ import Images from "./Photos";
 import Pages from "./Pages";
 
 export const ItemList = () => {
-    const current = useSelector(state => state.current);
-    const items = useSelector(state => state.data.items);
-    const fetching = useSelector(state => state.fetching);
+    const current = useSelector(state => state.app.current);
+    const items = useSelector(state => state.app.data.items);
+    const fetching = useSelector(state => state.app.fetching);
     useLayoutEffect(() => {
         const prev = document.querySelector('.item-preview.selected');
         if (prev) prev.classList.remove('selected');
         const item = document.querySelector(`div[data-id="${current}"]`);
         if (!item) return;
         item.classList.add('selected');
+        const list = document.querySelector('.items');
         item.scrollIntoView();
+        list.scrollBy(0, -28)
     }, [current]);
 
     function onSplit(e) {
