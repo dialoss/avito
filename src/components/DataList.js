@@ -28,7 +28,7 @@ export const MyAccordion = ({title, children}) => {
     )
 }
 
-const DataList = ({list, title, item, children}) => {
+const DataList = ({list, title, item, emptyMessage='Пусто', children}) => {
     return (
         <div className="data-list">
            <MyAccordion title={title}>
@@ -36,7 +36,7 @@ const DataList = ({list, title, item, children}) => {
                    {
                        list.map((it, i) => React.createElement(item, {it, i, key: it.id || it}))
                    }
-               </List> : "Пусто"}
+               </List> : emptyMessage}
                {children}
            </MyAccordion>
         </div>
@@ -48,7 +48,9 @@ export const ModifiableList = ({title, storage, filter=()=>true, remove=true, ad
     const [w, setw] = useState('');
     const filteredData = data.filter(filter);
     return (
-        <DataList title={title} list={filteredData} item={({it, i}) =>
+        <DataList title={title} list={filteredData}
+                  {...(storage==='removed'?{emptyMessage:'Нет удалённых для данного запроса'}:{})}
+                  item={({it, i}) =>
             <ListItem divider key={it} sx={{pl: 0}}>
                 {!listItem ? <ListItemText primary={`${i + 1}. ${it}`}/> :
                 React.createElement(listItem, {it})}

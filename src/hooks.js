@@ -7,6 +7,6 @@ export const useAddEvent = (name, callback) => {
     }, [])
 }
 
-export const triggerEvent = (name, data) => {
+export const triggerEvent = (name, data={}) => {
     window.dispatchEvent(new CustomEvent(name, {detail:data}));
 }

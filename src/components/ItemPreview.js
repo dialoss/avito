@@ -63,6 +63,7 @@ export const ItemPreview = ({index, data}) => {
                         modules={[Navigation, Pagination, Scrollbar, Thumbs, A11y]}
                         navigation
                         loop={true}
+                        speed={120}
                         spaceBetween={0}
                         slidesPerView={1}
                         onTouchStart={select}

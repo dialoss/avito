@@ -1,4 +1,6 @@
 import React, {useState} from 'react';
+import {Unstable_Popup as BasePopup} from '@mui/base/Unstable_Popup';
+import {useTransitionStateManager} from '@mui/base/useTransition';
 
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
@@ -6,10 +8,11 @@ import "yet-another-react-lightbox/plugins/counter.css";
 import Counter from "yet-another-react-lightbox/plugins/counter";
 import Lightbox, {createModule, useLightboxState} from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
-import {Button} from "@mui/material";
+import {Button, Fade} from "@mui/material";
 import {triggerEvent, useAddEvent} from "../hooks";
 import {getImages} from "./tools";
 import {fetchDetails} from "../downloader";
+import InfoIcon from '@mui/icons-material/Info';
 
 let itemID = null;
 let updating = false;
@@ -22,9 +25,15 @@ const Preview = ({current, setCurrent, images}) => {
             const images = getImages(d.images);
             triggerEvent('images:update', {images});
             updating = false;
-            // store.dispatch(actions.updateItem({data: {images, id:itemID}, field:'images'}));
         })
     }
+
+    const handleClick = (event) => {
+        setAnchor(anchor ? null : event.currentTarget);
+    };
+
+    const [anchor, setAnchor] = React.useState(null);
+    const open = Boolean(anchor);
 
     return (
         <div className="preview">
@@ -40,9 +49,30 @@ const Preview = ({current, setCurrent, images}) => {
                 }
             </div>
             <Button variant={'contained'} className={'h'} onClick={update}>Качество</Button>
+            <div className="info">
+                <InfoIcon onClick={handleClick} style={{color:"#fff"}}></InfoIcon>
+                <BasePopup  disablePortal placement={'top'} open={open} anchor={anchor}>
+                    <MaterialUITransitionAdapter>
+                        <Fade timeout={300}>
+                            <p>Если части предметов на изображении не видны,
+                                нажмите кнопку <b>качество</b> для загрузки изображений в изначальном разрешении. Чтобы изменять главный план между
+                            областью превью и просматриваемым изображением по центру экрана, нажимайте на них.</p>
+                        </Fade>
+                    </MaterialUITransitionAdapter>
+                </BasePopup>
+            </div>
         </div>
 
     )
+}
+
+function MaterialUITransitionAdapter({children}) {
+    const {requestedEnter, onExited} = useTransitionStateManager();
+
+    return React.cloneElement(children, {
+        in: requestedEnter,
+        onExited,
+    });
 }
 
 function PreviewModule({children, ...props}) {
@@ -54,7 +84,6 @@ function PreviewModule({children, ...props}) {
         <Preview images={state.slides}
                  setCurrent={props.setCurrent}
                  current={state.currentIndex}>
-
         </Preview>
     </>;
 }
@@ -93,6 +122,7 @@ export const SimpleViewer = () => {
     return (
         <div className={'simple-viewer'}>
             <Lightbox
+                noScroll
                 index={current}
                 setCurrent={setCurrent}
                 open={open}

@@ -13,6 +13,7 @@ import {triggerEvent, useAddEvent} from "../hooks";
 import {actions} from "../store/app";
 import {useGetStorage} from "../store/localStorage";
 import {useForm} from "react-hook-form";
+import {HelpButton} from "./DataPage";
 
 export const DataFetch = () => {
     const items = useSelector(state => state.app.initialData.items);
@@ -70,9 +71,9 @@ export const DataFetch = () => {
                     <TextField {...register('url', {required: true})} type={'url'} fullWidth
                                size={'small'} label={'Сcылка из Авито'} variant="standard"/>
                     <Stack direction={'row'} spacing={1} alignItems={'center'}>
-                        <TextField {...register('limit', {value: 500})}
+                        <TextField {...register('limit', {value: 20})}
                                    type={'number'}
-                                   size={'small'} label={'Лимит объявлений'} variant="standard"/>
+                                   size={'small'} label={'Лимит страниц'} variant="standard"/>
                         <Button type={'submit'} variant="contained" onClick={startParse}>Начать</Button>
                     </Stack>
                 </Stack>
@@ -84,7 +85,7 @@ export const DataFetch = () => {
                             listItem={(it) => <RemovedPreview data={removed[it.it]}></RemovedPreview>}>
             </ModifiableList>
 
-            <DataList title={'История'} list={history} item={({it, i}) => {
+            <DataList title={'История запросов'} list={history} item={({it, i}) => {
                 let idUrl = window.location.href.replace(window.location.search, '') + "?id=" + it.id;
                 return <ListItem sx={{paddingLeft: 0, columnGap: 1}} divider key={it.id}>
                     <span>{i + 1}.</span>
@@ -101,6 +102,7 @@ export const DataFetch = () => {
             <ModifiableList label={'Фраза'}
                             title={'Фразы в чате'}
                             storage={'phrases'}></ModifiableList>
+            <HelpButton pos={{bottom: 10, right: 10}}></HelpButton>
         </div>
 
     )
@@ -120,12 +122,12 @@ function RemovedPreview({data}) {
 
 export function Alerts() {
     useAddEvent('alert', (d) => {
-        toast(d.detail.message, {type: d.detail.type,pauseOnHover: false})
-    });
+        const {message, type, duration} = d.detail;
+        toast(message, {type: type,pauseOnHover: false, autoClose: duration})
+    })
     return (
         <ToastContainer
             position="bottom-left"
-            autoClose={3000}
             hideProgressBar={false}
             newestOnTop
             closeOnClick

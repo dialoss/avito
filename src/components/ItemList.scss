@@ -12,12 +12,17 @@
     .items {
         overflow: auto;
         padding-bottom: 90px;
-        padding-top: 20px;
+        padding-top: 40px;
     }
-
+    .gutter {
+        z-index: 3;
+    }
     .split {
         overflow: hidden;
         height: 100vh;
+        .pane:first-child {
+            z-index: 3;
+        }
     }
 
     #map {
@@ -93,6 +98,27 @@
 
         .city {
             font-weight: 500;
+        }
+    }
+
+    header {
+        padding: 2px;
+        padding-top: 10px;
+        background-color: #fff;
+        display: flex;
+        justify-content: space-between;
+        z-index: 2;
+        top: 0;
+        position: absolute;
+        width: 100%;
+        &.visible {
+            top: 0;
+            transition: top 0.1s ease-out;
+        }
+
+        &.hidden {
+            top: -50px;
+            transition: top 0.1s ease-out;
         }
     }
 }
@@ -176,10 +202,10 @@
 $duration: 0.5s;
 
 #expand {
-    z-index: 3;
-    position: absolute;
-    left: 4px;
-    top: 2px;
+    //z-index: 3;
+    //position: absolute;
+    //left: 4px;
+    //top: 2px;
 }
 
 #expand.pin {
@@ -233,17 +259,31 @@ $preview-count: 4;
     background-color: rgba(107, 107, 107, 0.73);
     z-index: -1;
 
+
 }
 
 .preview {
     position: absolute;
     bottom: 0;
-    background-color: white;
+    background-color: rgba(107, 107, 107, 0.73);
     z-index: 1;
     width: 100vw;
-
+    padding-bottom: 10px;
     max-height: 30vh;
     overflow: auto;
+
+    .info {
+        position: fixed;
+        box-shadow: 0 0 2px 0 grey;
+        bottom: 10px;
+        right: 10px;
+        .base-Popup-root {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 3px;
+            width: 300px;
+        }
+    }
 
     &-inner {
         padding: 4px;
@@ -326,4 +366,8 @@ $preview-count: 4;
 .Toastify__toast-container {
     bottom: 60px !important;
     max-width: 70% !important;
+}
+
+.MuiTablePagination-selectIcon {
+    right: 20px !important;
 }

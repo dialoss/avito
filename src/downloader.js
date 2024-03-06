@@ -18,7 +18,6 @@ function findCoincidence(text, word) {
     }
 }
 
-let apiCounter = 0;
 
 class APIEndpoints {
     constructor(keys = [], endpoint = '', headers = {}, fieldNames = {}, payload = {}, site = "") {
@@ -27,7 +26,7 @@ class APIEndpoints {
         this.apiCounter = 0;
     }
 
-    request(url, request = {body: {}, headers: {}}, stringify = true, message='') {
+    request(url, request = {body: {}, headers: {}}, stringify = true, message = '') {
         return this.endpoints[(this.apiCounter++) % this.endpoints.length].request(url, request, stringify, message);
     }
 }
@@ -41,7 +40,7 @@ class Endpoint {
         this.headers = headers;
     }
 
-    request(url, request = {body: {}, headers: {}}, stringify = true, mobile=false, message='') {
+    async request(url, request = {body: {}, headers: {}}, stringify = true, mobile = false, message = '') {
         this.payload[this.fieldNames['key']] = this.key;
         this.payload[this.fieldNames['device']] = mobile ? 'mobile' : 'desktop';
         this.payload['url'] = url;
@@ -50,14 +49,13 @@ class Endpoint {
         let options = {
             method,
             headers: {
-
                 ...this.headers,
                 ...request.headers,
             },
             ...(method === 'POST' ? {body: (stringify ? JSON.stringify(request.body) : request.body)} : {})
         };
         console.log(options)
-        return fetch(this.endpoint + '?' + new URLSearchParams(this.payload), options).catch(er => triggerEvent('alert', {
+        return await fetch(this.endpoint + '?' + new URLSearchParams(this.payload), options).catch(er => triggerEvent('alert', {
             type: "error",
             message: message || 'Ошибка',
         }))
@@ -79,37 +77,63 @@ export const apis = [
         'key': 'api_key',
         'device': 'device',
     }, {
-        'render_js': 'false', 'cookies': COOKIE, 'forward_headers': true,'device': 'desktop',
+        'render_js': 'false', 'cookies': COOKIE, 'forward_headers': true, 'device': 'desktop',
     }, 'https://app.scrapingbee.com/'),
-    new APIEndpoints(['815cfdc4cfa8453fb70bf25bbb03c169','98155c6a44ab4ec29f6d1a3a23dc9d96','da056a6fd38d4c6684b55e67a6bcdab9',
-    '70f5df5b924e4c75a47de0d00c728753','009fce480b8f4c86a2ea7ca76a37e18c'],'https://api.scrapingant.com/v2/general',{},{
-        'key':'x-api-key',
-    },{
-        'browser': false, 'cookies': COOKIE,
+    new APIEndpoints(['815cfdc4cfa8453fb70bf25bbb03c169', '98155c6a44ab4ec29f6d1a3a23dc9d96', 'da056a6fd38d4c6684b55e67a6bcdab9',
+        '70f5df5b924e4c75a47de0d00c728753', '009fce480b8f4c86a2ea7ca76a37e18c'], 'https://api.scrapingant.com/v2/general', {}, {
+        'key': 'x-api-key',
+        'device': 'device',
+    }, {
+        'browser': false, 'cookies': COOKIE, 'device': 'dekstop',
     })
 ];
 
 const endpoints = apis[2].endpoints;
+const concurrency = {};
+for (let i = 0; i < endpoints.length; i++) concurrency[i] = 0;
 
 async function apiRequest(url) {
-    let data = null;
-    console.log(url)
-    let cnt = 0;
-    while (!data && cnt < 3) {
-        try {
-            await endpoints[(apiCounter++) % endpoints.length].request(url).then(d => data = d);
+    return new Promise(resolve => {
+        for (let i = 0; i < endpoints.length; i++) {
+            if (concurrency[i] < 3) {
+                concurrency[i] += 1;
+                endpoints[i].request(url).then(d => {
+                    concurrency[i] -= 1;
+                    resolve(d);
+                });
+                return
+            }
         }
-        catch (e){}
-        cnt++;
-    }
-    return data;
+        const waiter = setInterval(() => {
+            for (let i = 0; i < endpoints.length; i++) {
+                if (concurrency[i] < 3) {
+                    concurrency[i] += 1;
+                    clearInterval(waiter)
+                    endpoints[i].request(url).then(d => {
+                        concurrency[i] -= 1;
+                        resolve(d);
+                    });
+                    return
+                }
+            }
+        }, 200);
+    })
 }
 
 async function getData(url) {
-    return await apiRequest(url).then(r => r.text()).then(d => {
-        const str = decodeURIComponent(d.match(/(?<=__initialData__ = ").*?;/)).slice(0, -2);
-        return JSON.parse(str);
-    })
+    let data = null;
+    while (!data) {
+        await apiRequest(url).then(r => r.text()).then(d => {
+            try {
+                const str = decodeURIComponent(d.match(/(?<=__initialData__ = ").*?;/)).slice(0, -2);
+                data = JSON.parse(str);
+            } catch (e) {
+            }
+        })
+        await new Promise(r => setTimeout(r, 300));
+    }
+    console.log('done')
+    return data;
 }
 
 function updateUrl(url, params) {
@@ -173,6 +197,7 @@ class API {
 
 class DesktopAPI extends API {
     add(items) {
+        this.total += Object.values(items).length;
         store.dispatch(actions.appendData({items, geo: this.geo}));
     }
 
@@ -181,24 +206,24 @@ class DesktopAPI extends API {
         try {
             initData = await this.api_request(1)
         } catch (e) {
-            triggerEvent('alert', {message:'Ошибка', type:'error'})
+            triggerEvent('alert', {message: 'Ошибка', type: 'error'})
             return;
         }
         const items = await this.prepare(initData);
-        const pagesLimit = Math.max(1, Math.floor(window.parseLimit / 50));
         const d = this.get_data(initData)["data"];
         const on_page = d['itemsOnPageMainSection']
         const total = d['mainCount']
         let ads;
         if (on_page === 50 && total > 50) ads = total;
         else ads = on_page;
-        const pages = Math.min(Math.floor(ads / 50) + 1, pagesLimit);
+        const pages = Math.min(Math.floor(ads / 50) + 1, window.parseLimit);
         console.log('PAGES', pages, window.parseLimit, total)
 
         this.add(items);
 
         const tasks = [];
         for (let p = 2; p <= pages; p++) {
+            if (this.total > window.parseLimit) break;
             tasks.push(this.api_request(p).then(data => {
                 this.add(this.prepare(data));
             }));
@@ -209,6 +234,7 @@ class DesktopAPI extends API {
                 'count': Object.values(this.items).length,
                 "items": this.items,
             };
+            console.log(data)
             return upload(JSON.stringify(data));
         });
     }
@@ -364,6 +390,9 @@ export async function start(url) {
 export function fetchDetails(id) {
     const api = `https://m.avito.ru/api/19/items/`;
     return apis[2]
-        .request(api + id + "?key=af0deccbgcgidddjgnvljitntccdduijhdinfgjgfjir&action=view",  {body: {}, headers: {}},false, true)
+        .request(api + id + "?key=af0deccbgcgidddjgnvljitntccdduijhdinfgjgfjir&action=view", {
+            body: {},
+            headers: {}
+        }, false, true)
         .then(r => r.json())
 }

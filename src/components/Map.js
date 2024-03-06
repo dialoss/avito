@@ -14,7 +14,7 @@ class YMap {
                 "map",
                 {
                     center: data.geo,
-                    zoom: 12
+                    zoom: 11
                 },
                 {
                     searchControlProvider: "yandex#search"

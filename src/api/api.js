@@ -10,29 +10,20 @@ export function fetchData() {
 
 }
 
-const CLIENT_SECRET = '1YEIDQh_crlmwGWSiBIZF9_s4vPPG4uW7bu91MB8';
-const CLIENT_ID = '6KV6ypDjqyB5eVcLhWP5';
-
 class Auth {
     static token = null;
 
     static async getToken() {
         if (Auth.token) return Auth.token;
-        return await apis[2].request('https://api.avito.ru/token', {
-            headers: {},
-            method:"POST",
-            body: new URLSearchParams({
-                'client_secret': CLIENT_SECRET,
-                'client_id': CLIENT_ID,
-                'grant_type': 'client_credentials'
-            })
-        }, false).then(r => r.json()).then(d => {
+        return await fetch("https://privet123.pythonanywhere.com/auth").then(r => r.json()).then(d => {
             console.log(d)
             Auth.token = d.access_token;
             return Auth.token;
         })
     }
 }
+
+Auth.getToken();
 
 export const chats = {};
 
@@ -54,27 +45,28 @@ export async function getChatID(adID) {
 }
 
 export async function sendMessage(message, id) {
+    const token = await Auth.getToken()
     try {
-        const token = await Auth.getToken();
         Promise.all([chats[id]]).then(d => {
+            console.log(d)
             const chatID = d[0].result.channelId;
-            apis[2].request(`https://api.avito.ru/messenger/v1/accounts/${328145761}/chats/${chatID}/messages`, {
+            fetch("https://privet123.pythonanywhere.com/message", {
                 headers: {
                     'content-type': 'application/json',
-                    "Authorization": "Bearer " + token,
-                    "Spb-Authorization": "Bearer " + token,
                 },
-                body: {
-                    "message": {
-                        "text": message,
-                    },
-                    "type": "text"
-                }
+                method: "POST",
+                body: JSON.stringify({
+                    message,
+                    chat: chatID,
+                    token,
+                })
+            }).then(r => r.json()).then(r => {
+                if (r.id) triggerEvent('alert', {message: 'Сообщение отправлено', type: "success", duration: 1000});
+                else triggerEvent('alert', {message: 'Сообщение не отправлено', type: "error", duration: 1000});
             })
         })
-    }
-    catch (e) {
-        triggerEvent('alert', {message: "Ошибка", type:"error"})
+    } catch (e) {
+        triggerEvent('alert', {message: "Ошибка", type: "error"})
     }
 }
 

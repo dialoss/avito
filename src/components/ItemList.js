@@ -9,6 +9,7 @@ import Window from "./Window";
 import {Sheet} from "./Sheet";
 import Images, {SimpleViewer} from "./Photos";
 import Pages from "./Pages";
+import {HelpButton} from "./DataPage";
 
 export const ItemList = () => {
     const current = useSelector(state => state.app.current);
@@ -37,6 +38,7 @@ export const ItemList = () => {
     const ref = useRef(null);
     return (
         <div className={'item-list'}>
+            {!items.length && <HelpButton id={'secondary-help'} pos={{bottom: 90, right: 10, position:"fixed"}}></HelpButton>}
             <div className="counter_all">{`Объявлений: ${items.length}`}</div>
             <Split gutterSize={10} direction={'vertical'} sizes={sizes} minSize={100} onSetSizes={e => {
                 onSplit(e);
@@ -45,7 +47,7 @@ export const ItemList = () => {
                 <Map></Map>
                 <Pages ref={ref} items={items}></Pages>
             </Split>
-            <Window title={'EXCEL   '} x={'left'} defaultOpened={true}><Sheet></Sheet></Window>
+            <Window title={'EXCEL'} x={'left'} defaultOpened={true}><Sheet></Sheet></Window>
             <Images></Images>
             <SimpleViewer></SimpleViewer>
         </div>
