@@ -46,19 +46,28 @@ class Endpoint {
         this.payload['url'] = url;
         const l = Object.values(request.body).length;
         const method = request.method || (l ? 'POST' : 'GET');
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), 15000);
         let options = {
             method,
             headers: {
                 ...this.headers,
                 ...request.headers,
             },
-            ...(method === 'POST' ? {body: (stringify ? JSON.stringify(request.body) : request.body)} : {})
+            ...(method === 'POST' ? {body: (stringify ? JSON.stringify(request.body) : request.body)} : {}),
+            signal: controller.signal
         };
         console.log(options)
-        return await fetch(this.endpoint + '?' + new URLSearchParams(this.payload), options).catch(er => triggerEvent('alert', {
-            type: "error",
-            message: message || 'Ошибка',
-        }))
+        let cnt = 0;
+        const f = async () => {
+            if (cnt >= 3) return;
+            const r = await fetch(this.endpoint + '?' + new URLSearchParams(this.payload), options);
+            clearTimeout(id);
+            cnt++;
+            if (r.status !== 200) return await f();
+            return r;
+        }
+        return await f();
     }
 }
 
@@ -79,8 +88,16 @@ export const apis = [
     }, {
         'render_js': 'false', 'cookies': COOKIE, 'forward_headers': true, 'device': 'desktop',
     }, 'https://app.scrapingbee.com/'),
-    new APIEndpoints(['815cfdc4cfa8453fb70bf25bbb03c169', '98155c6a44ab4ec29f6d1a3a23dc9d96', 'da056a6fd38d4c6684b55e67a6bcdab9',
-        '70f5df5b924e4c75a47de0d00c728753', '009fce480b8f4c86a2ea7ca76a37e18c'], 'https://api.scrapingant.com/v2/general', {}, {
+    new APIEndpoints([
+        '815cfdc4cfa8453fb70bf25bbb03c169',
+        '29d83fb7ed344eeaaa303ffcf51bdca9',
+        '98155c6a44ab4ec29f6d1a3a23dc9d96',
+        'da056a6fd38d4c6684b55e67a6bcdab9',
+        'bc650cba5eff4b57969a0901494e9108',
+        '70f5df5b924e4c75a47de0d00c728753',
+        'ea543b9de5df427193b61b2b1b7ca42c',
+        '009fce480b8f4c86a2ea7ca76a37e18c'
+    ], 'https://api.scrapingant.com/v2/general', {}, {
         'key': 'x-api-key',
         'device': 'device',
     }, {
@@ -92,10 +109,13 @@ const endpoints = apis[2].endpoints;
 const concurrency = {};
 for (let i = 0; i < endpoints.length; i++) concurrency[i] = 0;
 
+const LIMIT = 1;
+
 async function apiRequest(url) {
     return new Promise(resolve => {
+        console.log({...concurrency})
         for (let i = 0; i < endpoints.length; i++) {
-            if (concurrency[i] < 3) {
+            if (concurrency[i] < LIMIT) {
                 concurrency[i] += 1;
                 endpoints[i].request(url).then(d => {
                     concurrency[i] -= 1;
@@ -106,7 +126,7 @@ async function apiRequest(url) {
         }
         const waiter = setInterval(() => {
             for (let i = 0; i < endpoints.length; i++) {
-                if (concurrency[i] < 3) {
+                if (concurrency[i] < LIMIT) {
                     concurrency[i] += 1;
                     clearInterval(waiter)
                     endpoints[i].request(url).then(d => {
@@ -122,16 +142,14 @@ async function apiRequest(url) {
 
 async function getData(url) {
     let data = null;
-    while (!data) {
-        await apiRequest(url).then(r => r.text()).then(d => {
-            try {
-                const str = decodeURIComponent(d.match(/(?<=__initialData__ = ").*?;/)).slice(0, -2);
-                data = JSON.parse(str);
-            } catch (e) {
-            }
-        })
-        await new Promise(r => setTimeout(r, 300));
-    }
+    await apiRequest(url).then(r => r.text()).then(d => {
+        try {
+            const str = decodeURIComponent(d.match(/(?<=__initialData__ = ").*?;/)).slice(0, -2);
+            data = JSON.parse(str);
+        } catch (e) {
+        }
+    })
+
     console.log('done')
     return data;
 }

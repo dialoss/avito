@@ -16,7 +16,10 @@ const Image = ({url}) => {
 
 export const HelpModal = () => {
     const [show, setShow] = useState(false);
-    useAddEvent('help', () => setShow(true));
+    useAddEvent('help', () => {
+        window.ym(96654586,'reachGoal','help');
+        setShow(true);
+    });
     return (
         <MyModal title={'Помощь'} show={show}
                  onHide={() => setShow(false)}>
@@ -28,8 +31,8 @@ export const HelpModal = () => {
                 <h3>Общая информация</h3>
                 <p>Для начала работы вы должны зайти на сайт Авито (с мобильного устройства через браузер),
                     заполнить фильтры для поиска и скопировать URL на получившуюся страницу с результатами.</p>
-                <Image url={'./filters.png'}></Image>
-                <Image url={'./url.png'}></Image>
+                <Image url={'/filters.png'}></Image>
+                <Image url={'/url.png'}></Image>
                 <p>Затем вставить полученную ссылку в поле <b>Ссылка из Авито</b> на вкладке <b>ДАННЫЕ</b> и нажать кнопку <b>начать</b>.
                 Вы можете задать параметр <b>лимит страниц</b> (на странице 50 объявлений до применения фильтров).</p>
                 <br/>
@@ -93,16 +96,14 @@ export const HelpModal = () => {
 export const HelpButton = ({pos, id='helpbtn'}) => {
     return (
         <Button id={id} className={'h'} variant="contained" startIcon={<HelpOutlineIcon/>}
-                sx={{zIndex: 10, position: 'absolute', height: 30, ...pos}}
+                sx={{zIndex: 10, height: 30, ...pos}}
                 onClick={() => triggerEvent('help')}>Помощь</Button>
     )
 }
 
 const DataPage = () => {
     return (
-        <>
-            <Window min title={'ДАННЫЕ'}><DataFetch></DataFetch></Window>
-        </>
+        <Window min title={'ДАННЫЕ'}><DataFetch></DataFetch></Window>
     );
 };
 

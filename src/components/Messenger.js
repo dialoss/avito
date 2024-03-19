@@ -12,9 +12,11 @@ export const Messenger = ({item}) => {
     const send = () => {
         if (!message) return;
         sendMessage(message, item.id);
+        window.ym(96654586,'reachGoal','sendmessage');
     }
 
     const openChat = () => {
+        window.ym(96654586,'reachGoal','openchat');
         Promise.all([chats[item.id]]).then(d =>
             window.open("https://m.avito.ru/profile/messenger/channel/" + d[0].result.channelId)
         )

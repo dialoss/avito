@@ -21,9 +21,7 @@ export const ItemList = () => {
         const item = document.querySelector(`div[data-id="${current}"]`);
         if (!item) return;
         item.classList.add('selected');
-        const list = document.querySelector('.items');
         item.scrollIntoView();
-        list.scrollBy(0, -28)
     }, [current]);
 
     function onSplit(e) {

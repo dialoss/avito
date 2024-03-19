@@ -68,8 +68,8 @@ const Pages = React.forwardRef(({items}, ref) => {
                 <Button id={'expand'}
                                                   variant="contained"
                                                   onClick={() => setExpanded(e => !e)}>
-                    <p>{expanded ? 'Скрыть' : "Показать"} описания</p>
-                </Button>}
+                    <p>{expanded ? '-' : "+"} описания</p>
+                </Button>
                 <FilterAndSort></FilterAndSort>
             </Header>}
             <div className="items-inner">

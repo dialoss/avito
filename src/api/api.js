@@ -10,12 +10,22 @@ export function fetchData() {
 
 }
 
+const BASE_URL = 'https://privet123.pythonanywhere.com/';
+
+export class Net {
+    static request(endpoint, request={}) {
+        return fetch(BASE_URL + endpoint, request)
+            .then(r => r.json())
+            .catch(er => triggerEvent('alert', {message:'Ошибка запроса',type:'error'}));
+    }
+}
+
 class Auth {
     static token = null;
 
     static async getToken() {
         if (Auth.token) return Auth.token;
-        return await fetch("https://privet123.pythonanywhere.com/auth").then(r => r.json()).then(d => {
+        return await Net.request('auth').then(d => {
             console.log(d)
             Auth.token = d.access_token;
             return Auth.token;
@@ -50,7 +60,7 @@ export async function sendMessage(message, id) {
         Promise.all([chats[id]]).then(d => {
             console.log(d)
             const chatID = d[0].result.channelId;
-            fetch("https://privet123.pythonanywhere.com/message", {
+            Net.request("message", {
                 headers: {
                     'content-type': 'application/json',
                 },
@@ -60,7 +70,7 @@ export async function sendMessage(message, id) {
                     chat: chatID,
                     token,
                 })
-            }).then(r => r.json()).then(r => {
+            }).then(r => {
                 if (r.id) triggerEvent('alert', {message: 'Сообщение отправлено', type: "success", duration: 1000});
                 else triggerEvent('alert', {message: 'Сообщение не отправлено', type: "error", duration: 1000});
             })
@@ -83,4 +93,15 @@ export function toggleLike(state, id) {
         if (state) storagePush('liked', id);
         else storageRemove('liked', id);
     });
+}
+
+function callback(r) {
+    console.log(r)
+}
+
+export async function subscribe() {
+    let response = await Net.request('messages');
+    if (response.statusCode === 200) callback(response);
+    else await new Promise(resolve => setTimeout(resolve, 1000));
+    await subscribe();
 }

@@ -33,6 +33,7 @@ const Window = ({title, defaultOpened = false, callback=() => {}, children}) => 
             ref={ref}
             noResize
             noMove
+            noAnimation
             background={"#1976D2"}
             noClose
             width={200}
@@ -42,10 +43,8 @@ const Window = ({title, defaultOpened = false, callback=() => {}, children}) => 
             onMaximize={() => setOpened(true)}
             onMinimize={() => setOpened(false)}
             title={title}
-        >
-            <div>
-                {children}
-            </div>
+            >
+            {children}
         </WinBox>
     );
 };
