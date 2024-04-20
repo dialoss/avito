@@ -8,4 +8,4 @@ App was created for fast and convenient viewing of avito ads.
 + Add ads to favorites.
 + Export all ads to Excel.
 + Message campaign to sellers and modifiable list of predefined messages.
-+ Concurrency, scraping is running in at least 6 parallel workers, so estimated speed is 30s/500pages. 
++ Concurrency, scraping is running in at least 6 parallel workers, so estimated speed is 500pages in 1min. 
