@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/avito/static/css/main.56aee1ee.css",
-    "main.js": "/avito/static/js/main.00806655.js",
+    "main.css": "/avito/static/css/main.4f21019a.css",
+    "main.js": "/avito/static/js/main.4b144632.js",
     "index.html": "/avito/index.html",
-    "main.56aee1ee.css.map": "/avito/static/css/main.56aee1ee.css.map",
-    "main.00806655.js.map": "/avito/static/js/main.00806655.js.map"
+    "main.4f21019a.css.map": "/avito/static/css/main.4f21019a.css.map",
+    "main.4b144632.js.map": "/avito/static/js/main.4b144632.js.map"
   },
   "entrypoints": [
-    "static/css/main.56aee1ee.css",
-    "static/js/main.00806655.js"
+    "static/css/main.4f21019a.css",
+    "static/js/main.4b144632.js"
   ]
 }
