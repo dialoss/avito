@@ -1,5 +1,5 @@
 ## Avito parser
-Парсер Авито
+## Парсер Авито
 App was created for fast and convenient viewing of avito ads.
 
 ### Features
