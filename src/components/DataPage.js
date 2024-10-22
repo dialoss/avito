@@ -3,21 +3,21 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import Window from "./Window";
 import {DataFetch} from "./Data";
 import {Button, Stack, TextField} from "@mui/material";
-import Dislike from "./Dislike";
+import Dislike, {Block} from "./Dislike";
 import {Like} from "./Like";
 import {MyModal} from "./MyModal";
 import {useForm} from "react-hook-form";
-import {getStorage, setStorageOnly} from "../store/localStorage";
 import {triggerEvent, useAddEvent} from "../hooks";
+import {useSelector} from "react-redux";
 
 const Image = ({url}) => {
-    return (<img src={url} onClick={() => triggerEvent('images:viewer', {images:[url]})} alt=""/>)
+    return (<img src={url} onClick={() => triggerEvent('images:viewer', {images: [url]})} alt=""/>)
 }
 
 export const HelpModal = () => {
     const [show, setShow] = useState(false);
     useAddEvent('help', () => {
-        window.ym(96654586,'reachGoal','help');
+        window.ym(96654586, 'reachGoal', 'help');
         setShow(true);
     });
     return (
@@ -33,8 +33,10 @@ export const HelpModal = () => {
                     заполнить фильтры для поиска и скопировать URL на получившуюся страницу с результатами.</p>
                 <Image url={'/filters.png'}></Image>
                 <Image url={'/url.png'}></Image>
-                <p>Затем вставить полученную ссылку в поле <b>Ссылка из Авито</b> на вкладке <b>ДАННЫЕ</b> и нажать кнопку <b>начать</b>.
-                Вы можете задать параметр <b>лимит страниц</b> (на странице 50 объявлений до применения фильтров).</p>
+                <p>Затем вставить полученную ссылку в поле <b>Ссылка из Авито</b> на вкладке <b>ДАННЫЕ</b> и нажать
+                    кнопку <b>начать</b>.
+                    Вы можете задать параметр <b>лимит страниц</b> (на странице 50 объявлений до применения фильтров).
+                </p>
                 <br/>
                 <p>
                     Вкладка <b>EXCEL</b> - это таблица с данными об объявлениях.
@@ -67,10 +69,19 @@ export const HelpModal = () => {
                         кнопку <b>получить ключи</b>.
                     </li>
                     <li>Скопировать <b>Client_id</b> и <b>Client_secret</b>.</li>
-                    <li>Перейти по <a href="https://www.avito.ru/profile/basic">ссылке</a> и скопировать <b>номер
-                        профиля</b> (9 цифр, например
+                    <li>Перейти по <a target={'_blank'} href="https://www.avito.ru/profile/basic">ссылке</a> и
+                        скопировать <b>номер
+                            профиля</b> (9 цифр, например
                         328 145 761)
                     </li>
+                    <li>Установить расширение <a target={'_blank'}
+                                                 href="https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm">Cookie
+                        Editor</a> в Chrome на ПК или
+                        в браузере Firefox на Android. Перейти на авито, войти в свой профиль, открыть расширение, дать
+                        разрешения расширению и нажать кнопку <b>Export</b> -> <b>Header String</b>.
+                        Вставить в поле ввода <b>Cookie</b> в низу этой формы.
+                    </li>
+                    <li><b>Нажать подтвердить</b></li>
                 </ol>
                 <Credentials></Credentials>
                 <hr/>
@@ -79,10 +90,12 @@ export const HelpModal = () => {
                 объявления</b>).
                 <br/>
                 <Like></Like> - добавить объявление в избранные.
+                <br/>
+                <Block></Block> - убрать все объявления продавца из выдачи.
                 <hr/>
-                <b>!ВАЖНО</b> история, фильтры, удалённые объявления хранятся в кэше браузера, поэтому, при его
-                переустановке или очистке
-                кэша произойдет удаление этих данных.
+                <p>История, фильтры, удалённые объявления и другие данные хранятся на сервере, поэтому для доступа к ним
+                    необходимо
+                    авторизоваться, нажав кнопку <Button onClick={window.login}>Вход</Button></p>
                 <p>Вкладка <b>История запросов</b> - история последних работ по сбору объявлений.</p>
                 <p>Вкладка <b>Фильтры</b> - ваши слова-фильтры для исключения объявлений из поиска, которые
                     содержат
@@ -93,7 +106,7 @@ export const HelpModal = () => {
     )
 }
 
-export const HelpButton = ({pos, id='helpbtn'}) => {
+export const HelpButton = ({pos, id = 'helpbtn'}) => {
     return (
         <Button id={id} className={'h'} variant="contained" startIcon={<HelpOutlineIcon/>}
                 sx={{zIndex: 10, height: 30, ...pos}}
@@ -109,34 +122,31 @@ const DataPage = () => {
 
 export default DataPage;
 
-function getCookie(text) {
-    const d = JSON.parse(text);
-    let s = "";
-    for (const cookie of d) {
-        s += cookie.name + "=" + cookie.value + "&"
-    }
-    return s;
-}
-
 const Credentials = () => {
     const {
         register, handleSubmit,
     } = useForm();
 
     function submit(data) {
-        data.id = +data.id.replaceAll(' ', '');
-        data.cookie = getCookie(data.cookie);
-        setStorageOnly('avito', data);
+        data.cookie = data.cookie.match(/sessid=.*?;/)[0];
+        data.profile_id = +data.profile_id.toString().replaceAll(' ', '');
+        window.user.update(data).then(d => triggerEvent('alert', {
+                message: 'Данные обновлены',
+                type: 'success',
+                duration: 1000
+            })
+        )
     }
 
-    const cred = getStorage('avito', '{"client_id": "", "client_secret": "", "id": "", "cookie": ""}');
-    const fields = ['client_id', 'client_secret', 'id', 'cookie'];
+    const user = useSelector(state => state.app.user);
+
+    const fields = ['client_id', 'client_secret', 'profile_id', 'cookie'];
     const labels = ['Client_id', 'Client_secret', 'Номер профиля', 'Cookie'];
 
     return (<Stack direction={'column'}>
         <form onSubmit={handleSubmit((data) => submit(data))}>
             {fields.map((f, i) =>
-                <TextField key={f} {...register(f, {required: true, value: cred[f]})} fullWidth
+                <TextField key={f} {...register(f, {required: true, value: user[f]})} fullWidth
                            size={'small'} label={labels[i]} variant="standard"/>)}
             <Button variant={'outlined'} type={'submit'}>Подтвердить</Button>
         </form>

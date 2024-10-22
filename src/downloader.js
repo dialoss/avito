@@ -1,10 +1,9 @@
 import {fields} from "./config";
-import {COOKIE} from "./tools";
 import axios from "axios";
 import {store} from "./store";
-import {actions} from "./store/app";
-import {getStorage} from "./store/localStorage";
+import {actions, getStorage} from "./store/app";
 import {triggerEvent} from "./hooks";
+import dayjs from "dayjs";
 
 function findCoincidence(text, word) {
     let t = text.toLowerCase();
@@ -57,24 +56,37 @@ class Endpoint {
             ...(method === 'POST' ? {body: (stringify ? JSON.stringify(request.body) : request.body)} : {}),
             signal: controller.signal
         };
-        console.log(options)
+
         let cnt = 0;
         const f = async () => {
             if (cnt >= 3) return;
-            const r = await fetch(this.endpoint + '?' + new URLSearchParams(this.payload), options);
+            const url = this.endpoint + '?' + new URLSearchParams(this.payload);
+            const r = await fetch("https://innopolisuniversity.pythonanywhere.com/parse", {
+                method: "POST",
+                body: JSON.stringify({
+                    url: url,
+                    cookie: window.user.data.cookie
+                }),
+                headers: {
+                    "content-type": "application/json"
+                }
+            }).then(r => r.json());
             clearTimeout(id);
             cnt++;
+            console.log(r)
             if (r.status !== 200) return await f();
-            return r;
+            return r.content;
         }
         return await f();
     }
 }
 
+
 export const apis = [
-    new APIEndpoints(['5c07f7dcd6c19497a4e74a4024e02569', '5f80d75692079dbd82db12cc6ca8e937', 'a0822455a0b96ebfe83740d1283bb65c', '3a5531fd0d5dee79c425990c1216fae9'], 'https://api.scraperapi.com/', {
+    new APIEndpoints([
+        'b6e199ecbd33b4a85452be1fe9cac05d',
+        '3125a4ab9a119b5af9590665b17c8121'], 'https://api.scraperapi.com/', {
         'accept': '*/*',
-        'X-Cookie': COOKIE
     }, {
         'key': 'api_key',
         'device': 'device_type',
@@ -82,30 +94,9 @@ export const apis = [
         'keep_headers': 'true',
         'device_type': 'mobile'
     }, 'https://api.scraperapi.com/dashboard'),
-    new APIEndpoints(['ZLPGY3FA2HNBVFEESROXDFWSFKCD5XGEB13IM4O9WA9LN5UR29HB24A81FTKZO9V3BVFHZLJZ7OU620Q', '59D7K2E2B1ISCMSKC3S5E0NB3EV0XISDYQASX7JHFUZB4N3G2488PEENSQYXKJIDWTEVY1Y7U9XY400U', 'HHIV907F7F8Z6ISNEJVTAE14FIBNFR29G4G3PXSC3U1NVGJURTWTQXMTABWG31CT33V5T5RXTAHEMLY4', '16YWZ71HI7HE89WUDAA9W6V3Z4UYZ743U2H6JXGPP8AJTMGPNUSZ8A0W2XYPIFTR0NFCJO8SQQ3FJBJN', 'Z3QZIYV9WGSTK95PDN9J7SU9T0FKWKS7AK1BWXT2SXE087EXKP3EKQJBEE7TR84XJ30HH9ZFSW77B6W0'], 'https://app.scrapingbee.com/api/v1/', {}, {
-        'key': 'api_key',
-        'device': 'device',
-    }, {
-        'render_js': 'false', 'cookies': COOKIE, 'forward_headers': true, 'device': 'desktop',
-    }, 'https://app.scrapingbee.com/'),
-    new APIEndpoints([
-        '815cfdc4cfa8453fb70bf25bbb03c169',
-        '29d83fb7ed344eeaaa303ffcf51bdca9',
-        '98155c6a44ab4ec29f6d1a3a23dc9d96',
-        'da056a6fd38d4c6684b55e67a6bcdab9',
-        'bc650cba5eff4b57969a0901494e9108',
-        '70f5df5b924e4c75a47de0d00c728753',
-        'ea543b9de5df427193b61b2b1b7ca42c',
-        '009fce480b8f4c86a2ea7ca76a37e18c'
-    ], 'https://api.scrapingant.com/v2/general', {}, {
-        'key': 'x-api-key',
-        'device': 'device',
-    }, {
-        'browser': false, 'cookies': COOKIE, 'device': 'dekstop',
-    })
 ];
 
-const endpoints = apis[2].endpoints;
+const endpoints = apis[0].endpoints;
 const concurrency = {};
 for (let i = 0; i < endpoints.length; i++) concurrency[i] = 0;
 
@@ -142,8 +133,9 @@ async function apiRequest(url) {
 
 async function getData(url) {
     let data = null;
-    await apiRequest(url).then(r => r.text()).then(d => {
+    await apiRequest(url).then(d => {
         try {
+            console.log(d)
             const str = decodeURIComponent(d.match(/(?<=__initialData__ = ").*?;/)).slice(0, -2);
             data = JSON.parse(str);
         } catch (e) {
@@ -170,11 +162,11 @@ function formatGeo(geo) {
 }
 
 class API {
-    constructor(url, mobile, keywords_include = [], keywords_exclude = []) {
+    constructor(url, mobile) {
         this.url = '';
         this.items = {};
-        this.keywords_include = keywords_include;
-        this.keywords_exclude = getStorage('filters').concat(keywords_exclude);
+        this.keywords_include = [];
+        this.keywords_exclude = getStorage('filters');
         const parts = new URL(url);
         if (mobile) {
             this.url = `https://m.avito.ru${parts.pathname}`;
@@ -272,8 +264,8 @@ class DesktopAPI extends API {
         }
         if (field === 'sortTimeStamp') {
             return {
-                // 'time': DateTime.fromMillis(old).toFormat("dd.MM.yyyy HH:mm:ss"),
-                'timestamp': Math.floor(old / 1000)
+                date: dayjs(Math.floor(old)).format("D MMMM YYYY HH:mm"),
+                timestamp: Math.floor(old / 1000)
             };
         }
         if (field === 'urlPath') {
@@ -313,6 +305,7 @@ class DesktopAPI extends API {
             dt = images;
         }
         if (field === 'iva') {
+            console.log(item)
             let closed = item['closedItemsText'].split(' ')[0];
             const info = item['iva']['UserInfoStep'];
             let seller = item['rating'] || {};
@@ -329,19 +322,23 @@ class DesktopAPI extends API {
             try {
                 name = info[0]['payload']['profile']['title'];
             } catch (error) {
-                name = '';
+            }
+            let url = '';
+            try {
+                url = info[0]['payload']['profile']['link']
+            } catch (e) {
             }
             let date = '';
             try {
                 date = info[2]['payload']['value'].replace('На Авито с ', '');
             } catch (error) {
-                date = '';
             }
             return {
                 'seller': {
                     'date': date,
                     'name': name,
                     'all_ads': parseInt(closed), ...seller,
+                    'url': url
                 }
             };
         }
@@ -407,7 +404,7 @@ export async function start(url) {
 
 export function fetchDetails(id) {
     const api = `https://m.avito.ru/api/19/items/`;
-    return apis[2]
+    return apis[0]
         .request(api + id + "?key=af0deccbgcgidddjgnvljitntccdduijhdinfgjgfjir&action=view", {
             body: {},
             headers: {}

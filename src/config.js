@@ -1,8 +1,8 @@
 export const tableFields = ['seller_date', 'seller_name', 'seller_all_ratings',
     'seller_score_ratings', 'seller_all_ads',
     'badges', 'description',
-    'title',
-    'time', 'price', 'location', 'city','stats_total', 'seller_type', 'stats_today',  'url']
+    'title', 'timestamp',
+    'date', 'price', 'location', 'city','stats_total', 'seller_type', 'stats_today',  'url']
 
 export const ru = {
     'stats_total': "Просмотры всего",
@@ -11,7 +11,8 @@ export const ru = {
     'reserved': 'Резерв доставка',
     'description': "Описание",
     'title': 'Заголовок',
-    'time': "Время",
+    'date': "Время",
+    'timestamp':'Миллисекунды',
     'price': "Цена",
     'location': "Место",
     'address': 'Адрес',

@@ -10,16 +10,19 @@ import {Button, Link, ListItem, Stack, TextField, Typography} from "@mui/materia
 import {rub, toDate} from "./tools";
 import DataList, {ModifiableList} from "./DataList";
 import {triggerEvent, useAddEvent} from "../hooks";
-import {actions} from "../store/app";
-import {useGetStorage} from "../store/localStorage";
+import {actions, checkUser, storagePush, useGetStorage} from "../store/app";
 import {useForm} from "react-hook-form";
 import {HelpButton} from "./DataPage";
+import {store} from "../store";
+import {Login} from "../App";
+import {User} from "./User";
 
 export const DataFetch = () => {
     const items = useSelector(state => state.app.initialData.items);
     const removed = useSelector(state => state.app.removed);
     const [isParsing, setParsing] = useState(false);
     const dispatch = useDispatch();
+
 
     function setData(data) {
         dispatch(actions.setData(data));
@@ -33,7 +36,8 @@ export const DataFetch = () => {
 
     const startParse = ({url, limit}) => {
         window.ym(96654586, 'reachGoal', 'start');
-        if (url && !isParsing) {
+
+        if (url && !isParsing && checkUser()) {
             setParsing(true);
             try {
                 window.parseLimit = limit;
@@ -45,7 +49,11 @@ export const DataFetch = () => {
                         let s = window.location.href.replace(window.location.search, '');
                         s += '?id=' + id;
                         window.history.pushState({}, "", s);
-                        const d = {id, url, date: new Date().getTime()};
+                        const d = {
+                            id, url, date: new Date().getTime(),
+                            amount: Object.keys(store.getState().app.initialData.items).length
+                        };
+                        storagePush("history", d);
                         setHistory([...history, d]);
                         triggerEvent('alert', {message: 'Загрузка завершена!', type: 'success', duration: 2000})
                     });
@@ -65,8 +73,14 @@ export const DataFetch = () => {
     return (
         <>
             <div className={'data-fetch'}>
-                <Typography align={'center'} variant={'subtitle1'}>Объявлений
+                <div style={{ display: 'flex', justifyContent:'space-between'}}><Typography variant={'subtitle1'}>Объявлений
                     загружено: {Object.values(items).length}</Typography>
+                <div style={{
+                    justifyContent: 'end',
+                    alignItems: 'center',
+                    marginBottom: 10
+                }}>
+                    <Login></Login></div></div>
                 <Typography align={'center'} variant={'subtitle1'}>{isParsing && "Загрузка..."}</Typography>
                 <form onSubmit={handleSubmit((data) => startParse(data))}>
                     <Stack spacing={1}>
@@ -82,22 +96,44 @@ export const DataFetch = () => {
                 </form>
                 {isParsing && <p>Парсинг запущен. Не закрывайте браузер.</p>}
                 <div style={{marginTop: 20}}></div>
+                <div style={{marginBottom: 20}}><Typography textAlign={'center'}
+                                                            style={{fontSize: 14, fontWeight: 700}}>Данные отображаются
+                    только для конкретного результата парсинга</Typography>
+
+                </div>
                 <ModifiableList title={'Удалённые объявления'}
                                 storage={'removed'} add={false} filter={it => removed[it]}
-                                listItem={(it) => <RemovedPreview data={removed[it.it]}></RemovedPreview>}>
+                                listItem={({data}) => <RemovedPreview data={removed[data]}></RemovedPreview>}>
                 </ModifiableList>
+                <ModifiableList storage={'liked'} add={false} remove={true} filter={it => items[it]}
+                                listItem={({data}) => <RemovedPreview data={items[data]}/>}
+                                title={'Лайки'}></ModifiableList>
 
-                <DataList title={'История запросов'} list={history} item={({it, i}) => {
-                    let idUrl = window.location.href.replace(window.location.search, '') + "?id=" + it.id;
-                    return <ListItem sx={{paddingLeft: 0, columnGap: 1}} divider key={it.id}>
+                <DataList title={'История запросов'} list={[...history].reverse()} item={({data, i}) => {
+                    let idUrl = window.location.href.replace(window.location.search, '') + "?id=" + data.id;
+                    return <ListItem sx={{paddingLeft: 0, columnGap: 1}} divider key={data.id}>
                         <span>{i + 1}.</span>
                         <span style={{display: 'flex', flexDirection: 'column'}}>
-                                    <Link href={idUrl} style={{marginBottom: 6}}>Результат {it.id}</Link>
-                                    <Link href={it.url}>{it.url}</Link>
-                                    <p>Дата {toDate(it.date)}</p>
+                                    <Link href={idUrl} style={{marginBottom: 6}}>Результат {data.id}</Link>
+                                    <Link href={data.url}>{data.url}</Link>
+                                    <p>Дата {toDate(data.date)}</p>
+                                    <p>Количество объявлений {data.amount || "неизвестно"}</p>
                                 </span>
                     </ListItem>
                 }}></DataList>
+                <ModifiableList
+                                formatInput={getSellerId}
+                                add={false}
+                                listItem={({data}) =>
+                                    <div>
+                                        <User user={data}></User>
+                                        <Link target={'_blank'}
+                                            href={'https://www.avito.ru' + data.url}>{data.id}</Link>
+                                    </div>
+                                }
+                                sort={(a, b) => b.banned - a.banned}
+                                title={'Заблокированные продавцы'}
+                                storage={'banned'}></ModifiableList>
                 <ModifiableList label={'Слово-фильтр'}
                                 title={'Фильтры'}
                                 storage={'filters'}></ModifiableList>
@@ -105,13 +141,17 @@ export const DataFetch = () => {
                                 title={'Фразы в чате'}
                                 storage={'phrases'}></ModifiableList>
             </div>
-            <div style={{bottom: 0,
+
+            <div style={{
+                bottom: 0,
                 right: 0,
                 width: '100%',
-                position: 'fixed',}}>
+                position: 'fixed',
+            }}>
+
                 <div className="help-section"
                      style={{
-                         justifyContent:"space-between",
+                         justifyContent: "space-between",
                          backgroundColor: "#fff",
                          alignItems: 'center',
                          display: 'flex'
@@ -156,4 +196,10 @@ export function Alerts() {
             theme="colored"
             transition={Bounce}></ToastContainer>
     )
+}
+
+export function getSellerId(d) {
+    let m = d.toString().match(/\/[^\/]{30,40}\//);
+    if (m) return m[0].slice(1, -1);
+    return '';
 }

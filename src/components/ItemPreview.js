@@ -1,5 +1,5 @@
 import {User} from "./User";
-import Accordion from "./Accordion";
+import Accordion, {accordions} from "./Accordion";
 import {Messenger} from "./Messenger";
 import {Like} from "./Like";
 import {Swiper, SwiperSlide} from "swiper/react";
@@ -13,13 +13,12 @@ import 'swiper/css/scrollbar';
 import {useRef} from "react";
 import {getChatID, toggleLike} from "../api/api";
 import {useDispatch} from "react-redux";
-import {actions} from "../store/app";
+import {actions, storagePush} from "../store/app";
 import {store} from "../store";
-import Dislike from "./Dislike";
+import Dislike, {Block} from "./Dislike";
 import {rub, toDate} from "./tools";
-import {storagePush} from "../store/localStorage";
 import {triggerEvent} from "../hooks";
-
+import {getSellerId} from "./Data";
 
 
 export const ItemPreview = ({index, data}) => {
@@ -27,9 +26,16 @@ export const ItemPreview = ({index, data}) => {
 
     function dislike(e) {
         e.stopPropagation();
-        store.dispatch(actions.remove(data.id));
         storagePush('removed', data.id);
+        store.dispatch(actions.remove(data.id));
     }
+
+    function block(e) {
+        e.stopPropagation();
+        storagePush('banned', {...data.seller, id: getSellerId(data.seller.url), banned: new Date().getTime()});
+        store.dispatch(actions.updateData());
+    }
+
 
     const dispatch = useDispatch();
 
@@ -42,6 +48,7 @@ export const ItemPreview = ({index, data}) => {
              onMouseDown={select}>
             <div className="like-wrapper">
                 <div className="counter">{index}</div>
+                <Block callback={block}></Block>
                 <Dislike callback={dislike}></Dislike>
                 <Like state={data.liked} callback={(state) => toggleLike(state, data.id)}></Like>
             </div>
@@ -54,6 +61,8 @@ export const ItemPreview = ({index, data}) => {
                     <p className={'city'}>{data.city}</p>
                     <p className="time">{toDate(data.timestamp * 1000)}</p>
                     <div className="url"><a target={"_blank"} href={data.url}>{data.id}</a></div>
+                    <div className="url"><a target={"_blank"}
+                                            href={"https://www.avito.ru" + data.seller.url}>Профиль</a></div>
                 </div>
                 <div className="images">
                     <Swiper
@@ -72,7 +81,11 @@ export const ItemPreview = ({index, data}) => {
                             data.images.map((im, i) => <SwiperSlide key={i}>
                                 <div className={'swiper__image-wrapper'}>
                                     <img src={Object.values(im)[0]} alt=""
-                                         onClick={() => triggerEvent('images:open', {images:data.images, start:i, id:data.id})}/></div>
+                                         onClick={() => triggerEvent('images:open', {
+                                             images: data.images,
+                                             start: i,
+                                             id: data.id
+                                         })}/></div>
                             </SwiperSlide>)
                         }
                     </Swiper>
@@ -81,10 +94,10 @@ export const ItemPreview = ({index, data}) => {
             <Accordion id={data.id} className={'description'} title={'Описание'}>
                 {data.description}
             </Accordion>
-            <Accordion className={'contact'}
+            <Accordion id={"message" + data.id} className={'contact'}
                        callback={() => getChatID(data.id)}
                        title={'Связаться'}>
-                {<Messenger item={data}></Messenger>}
+                {<Messenger close={() => accordions['message' + data.id](true)} item={data}></Messenger>}
             </Accordion>
         </div>
     )

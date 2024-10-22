@@ -13,6 +13,9 @@
         overflow: auto;
         padding-bottom: 90px;
         padding-top: 40px;
+        &-columns {
+            display: flex;
+        }
     }
     .gutter {
         z-index: 3;
@@ -247,9 +250,6 @@ $duration: 0.5s;
 
 $preview-count: 4;
 
-.winbox {
-    visibility: hidden;
-}
 
 .preview-header {
     position: absolute;

@@ -9,7 +9,7 @@ import {
 import {actions} from "../store/app";
 import {store} from "../store";
 import {ru, tableFields} from "../config";
-import {formatField} from "../tools";
+import {formatField, isMobileDevice} from "../tools";
 import {useSelector} from "react-redux";
 import { L10n } from '@syncfusion/ej2-base';
 
@@ -52,6 +52,7 @@ class SheetController {
             sh.setColumnsWidth(150, ['H']);
             sh.setColumnsWidth(1, ['A']);
         }
+        if (!isMobileDevice()) return;
         const trySet = setInterval(() => {
             try {
                 sizes();

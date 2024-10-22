@@ -3,6 +3,7 @@ import 'winbox/dist/css/winbox.min.css'; // required
 import 'winbox/dist/css/themes/modern.min.css'; // optional
 import 'winbox/dist/css/themes/white.min.css'; // optional
 import WinBox from 'react-winbox';
+import {isMobileDevice} from "../tools";
 
 
 const Window = ({title, defaultOpened = false, callback=() => {}, children}) => {
@@ -12,6 +13,7 @@ const Window = ({title, defaultOpened = false, callback=() => {}, children}) => 
     openedRef.current = opened;
 
     useEffect(() => {
+        if (!isMobileDevice()) return;
         const win = ref.current.winBoxObj.dom;
         const header = win.querySelector('.wb-drag');
         const clone = header.cloneNode(true);
@@ -31,13 +33,15 @@ const Window = ({title, defaultOpened = false, callback=() => {}, children}) => 
     return (
         <WinBox
             ref={ref}
-            noResize
-            noMove
+            {...(isMobileDevice() ? {
+                noMove: true,
+                noResize: true,
+                width:200,
+                height:50
+            } : {})}
             noAnimation
             background={"#1976D2"}
             noClose
-            width={200}
-            height={50}
             {...(defaultOpened ? {max: true} : {min: true})}
             y='bottom'
             onMaximize={() => setOpened(true)}

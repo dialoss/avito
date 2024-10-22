@@ -4,9 +4,9 @@ import {Button, TablePagination} from "@mui/material";
 import {useDispatch} from "react-redux";
 import {actions} from "../store/app";
 import {accordions} from "./Accordion";
-import $ from 'jquery';
 import 'hiding-header/dist/style.css'
 import {FilterAndSort} from "./Filters";
+import {isMobileDevice} from "../tools";
 
 let prevPage = null;
 
@@ -53,7 +53,7 @@ const Pages = React.forwardRef(({items}, ref) => {
     const [expanded, setExpanded] = useState(false);
     useEffect(() => {
         for (const ac in accordions) {
-            accordions[ac](!expanded);
+            if (!ac.includes('message')) accordions[ac](!expanded);
         }
     }, [expanded, currentItems]);
 
@@ -61,6 +61,9 @@ const Pages = React.forwardRef(({items}, ref) => {
         const view = document.querySelector(".items");
         view.scrollTop = 0;
     }, [page]);
+
+    let columns = isMobileDevice() ? 1 : 3;
+    let l = Math.ceil(currentItems.length / columns);
 
     return (
         <div className="items" ref={ref}>
@@ -73,8 +76,16 @@ const Pages = React.forwardRef(({items}, ref) => {
                 <FilterAndSort></FilterAndSort>
             </Header>}
             <div className="items-inner">
-                {currentItems.map((it, i) => <ItemPreview key={it.id} data={it}
-                                                          index={itemOffset + i + 1}></ItemPreview>)}
+                <div className="items-columns">
+                    {
+                        Array(columns).fill(0).map((_, j) => <div key={j} className={'column'} style={{width: 100 / columns + "%"}}>
+                            {currentItems.slice(j, Math.min((j + 1) * l, currentItems.length))
+                                .map((it, i) => <ItemPreview key={it.id} data={it}
+                                                             index={itemOffset + i + 1}></ItemPreview>)}
+                        </div>)
+                    }
+                </div>
+
             </div>
             <div className="pagination">
                 <TablePagination

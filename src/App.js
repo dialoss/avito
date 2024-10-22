@@ -1,73 +1,51 @@
 import "./main.scss";
-import {isMobileDevice} from "./tools";
-import {ItemList} from "./components/ItemList";
-import {Windows} from "./components/Windows";
-import React, {useEffect, useState} from "react";
-import DataPage, {HelpButton, HelpModal} from "./components/DataPage";
+import React, {useState} from "react";
+import Userfront, {LoginForm} from "@userfront/toolkit/react";
+import {MyModal} from "./components/MyModal";
+import DataPage, {HelpModal} from "./components/DataPage";
 import {Alerts} from "./components/Data";
+import {ItemList} from "./components/ItemList";
+import Images, {SimpleViewer} from "./components/Photos";
+import {Button, Typography} from "@mui/material";
 
-import SendbirdApp from '@sendbird/uikit-react/App';
-import '@sendbird/uikit-react/dist/index.css';
-import PubNub from 'pubnub';
-import { PubNubProvider, usePubNub } from 'pubnub-react';
+Userfront.init("6nz5yrvb");
 
-const pubnub = new PubNub({
-    publishKey: 'pub-c-56abb064-1e5c-4b82-85c9-35e7bcd797d9',
-    subscribeKey: 'sub-c-68182538-8554-45c4-a0d7-81b3f332affd',
-    uuid: 'myUniqueUUID'
-});
+export function Login() {
+    const [show, setShow] = useState(false);
+    window.login = () => setShow(true);
+    return <>
+        {!Userfront.user.userUuid ? <Button variant={'contained'} onClick={() => setShow(true)}>Вход</Button> :
+            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                <Typography>{Userfront.user.name}</Typography> <Button
+                onClick={() => Userfront.logout()}>Выход</Button></div>}
+        <MyModal title={'Вход'} show={show}
+                 onHide={() => setShow(false)}>
+            <LoginForm theme={{
+                "colors": {
+                    "light": "#ffffff",
+                    "dark": "#5e72e4",
+                    "accent": "#13a0ff",
+                    "lightBackground": "#fdfdfd",
+                    "darkBackground": "#2d2d2d"
+                },
+                "colorScheme": "light",
+                "size": "compact",
+                "extras": {"rounded": true, "hideSecuredMessage": true}
+            }}/>
 
-function Chat() {
-    const pubnub = usePubNub();
-    const [channels] = useState(['test']);
-    const [messages, addMessage] = useState([]);
-    const [message, setMessage] = useState('');
-    const handleMessage = event => {
-        const message = event.message;
-        console.log(message)
-        if (typeof message === 'string' || message.hasOwnProperty('text')) {
-            const text = message.text || message;
-            addMessage(messages => [...messages, text]);
-        }
-    };
-    const sendMessage = message => {
-        if (message) {
-            pubnub
-                .publish({ channel: channels[0], message })
-                .then(() => setMessage(''));
-        }
-    };
-    window.send = sendMessage;
-    useEffect(() => {
-        const listenerParams = { message: handleMessage }
-        pubnub.addListener(listenerParams);
-        pubnub.subscribe({ channels });
-        return () => {
-            pubnub.unsubscribe({ channels })
-            pubnub.removeListener(listenerParams)
-        }
-    }, [pubnub, channels]);
-    useEffect(() => {
-        const listenerParams = { message: handleMessage }
-        pubnub.addListener(listenerParams);
-        pubnub.subscribe({ channels });
-        return () => {
-            pubnub.unsubscribe({ channels })
-            pubnub.removeListener(listenerParams)
-        }
-    }, [pubnub, channels]);
-    return <></>
+        </MyModal></>
 }
-
 
 function App() {
     return (
         <div className="app">
+            <div style={{display: 'none'}}><LoginForm></LoginForm></div>
             <HelpModal></HelpModal>
             <Alerts></Alerts>
             <DataPage></DataPage>
-            {isMobileDevice() ? <ItemList></ItemList> :
-                <Windows></Windows>}
+            <ItemList></ItemList>
+            <Images></Images>
+            <SimpleViewer></SimpleViewer>
         </div>
     );
 }

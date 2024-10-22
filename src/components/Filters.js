@@ -39,7 +39,7 @@ export const FilterAndSort = () => {
     const handleSortToggle = () => {
         setSortOrder((prevOrder) => (prevOrder === 'asc' ? 'desc' : 'asc'));
     };
-    console.log(items)
+
     useLayoutEffect(() => {
         dispatch(actions.setVisible([...items].sort((a, b) => {
             let comparison;
@@ -51,7 +51,7 @@ export const FilterAndSort = () => {
             else comparison = val1 - val2;
             return sortOrder === 'asc' ? comparison : -comparison;
         }).map(it => it.id)));
-    }, [sortOrder, sortBy]);
+    }, [items.length, sortOrder, sortBy]);
 
 
     return (

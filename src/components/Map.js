@@ -57,13 +57,13 @@ class YMap {
             zIndex: 1000,
         });
         if (this.prevSelected) {
-            this.unselectMarker(this.prevSelected);
+            await this.unselectMarker(this.prevSelected);
         }
         this.prevSelected = id;
         if (center) this._map.setCenter(store.getState().app.initialData.items[id].coords);
     }
 
-    unselectMarker(id) {
+    async unselectMarker(id) {
         this.objectManager.objects.setObjectOptions(id, {
             preset: 'islands#blueIcon',
             zIndex: 1,
@@ -97,11 +97,13 @@ class YMap {
     }
 
     resize() {
-        this._map.container.fitToViewport();
+        this._map && this._map.container.fitToViewport();
     }
 }
 
 export let map = null;
+
+window.resize = () => map.resize();
 
 export const Map = () => {
     const data = useSelector(state => state.app.data);

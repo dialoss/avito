@@ -1,6 +1,8 @@
-import {apis} from "../downloader";
 import {triggerEvent} from "../hooks";
-import {storagePush, storageRemove} from "../store/localStorage";
+import Userfront from "@userfront/toolkit/react";
+import {actions, storagePush, storageRemove} from "../store/app";
+import {store} from "../store";
+
 
 export function fetchData() {
     const location = new URLSearchParams(new URL(window.location).search).get('id');
@@ -10,67 +12,76 @@ export function fetchData() {
 
 }
 
-const BASE_URL = 'https://privet123.pythonanywhere.com/';
+
+const BASE_URL = 'https://avito-message.onrender.com/';
+// const BASE_URL = 'http://127.0.0.1:8000/';
+
 
 export class Net {
-    static request(endpoint, request={}) {
-        return fetch(BASE_URL + endpoint, request)
-            .then(r => r.json())
-            .catch(er => triggerEvent('alert', {message:'Ошибка запроса',type:'error'}));
-    }
-}
-
-class Auth {
-    static token = null;
-
-    static async getToken() {
-        if (Auth.token) return Auth.token;
-        return await Net.request('auth').then(d => {
-            console.log(d)
-            Auth.token = d.access_token;
-            return Auth.token;
+    static get(endpoint, headers={}) {
+        return fetch(BASE_URL + endpoint, {
+            headers: {
+                ...headers,
+                'token': window.user.token || '',
+                'uuid': Userfront.user.userUuid,
+            }
         })
+            .then(r => r.json())
+            .catch(er => triggerEvent('alert', {message: 'Ошибка запроса', type: 'error', duration: 2000}));
+    }
+
+    static post(endpoint, data) {
+        return fetch(BASE_URL + endpoint, {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {
+                'token': window.user.token || '',
+                'uuid': Userfront.user.userUuid,
+                'content-type': 'application/json'
+            }
+        })
+            .then(r => r.json())
+            .catch(er => triggerEvent('alert', {message: 'Ошибка запроса', type: 'error', duration: 2000}));
     }
 }
 
-Auth.getToken();
+function setData(d) {
+    window.user.data = {...window.user.data, ...d};
+    store.dispatch(actions.setUser(window.user.data));
+    return d;
+}
+
+window.user = {
+    data: {},
+    update: (data) => Net.post('user', data).then(d => setData(d)),
+    get: () => Net.get('user').then(d => setData(d)),
+}
+Userfront.addInitCallback(() =>
+    window.user.get()
+        .then(d => store.dispatch(actions.updateData()))
+);
+
+window.requests = Net;
 
 export const chats = {};
 
 export async function getChatID(adID) {
     if (chats[adID]) return;
-    let url = "https://socket.avito.ru/fallback?app_name=mav";
-    const data = {
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": "avito.chatCreateByItemId.v2",
-        "params": {
-            "itemId": adID,
-            "source": "details-item"
-        }
-    };
-    const p = apis[2].request(url, {body: data, headers: {}}).then(r => r.json());
+    const p = Net.get("chat?id=" + adID)
     chats[adID] = p;
     return p;
 }
 
 export async function sendMessage(message, id) {
-    const token = await Auth.getToken()
     try {
         Promise.all([chats[id]]).then(d => {
-            console.log(d)
-            const chatID = d[0].result.channelId;
-            Net.request("message", {
-                headers: {
-                    'content-type': 'application/json',
-                },
-                method: "POST",
-                body: JSON.stringify({
-                    message,
-                    chat: chatID,
-                    token,
-                })
-            }).then(r => {
+            let chatID;
+            try {
+                chatID = d[0].result.channelId;
+            } catch (e) {
+                triggerEvent('alert', {message: "Ошибка", type: "error"})
+            }
+            Net.get(`message?chat=${chatID}&message=${message}`).then(r => {
                 if (r.id) triggerEvent('alert', {message: 'Сообщение отправлено', type: "success", duration: 1000});
                 else triggerEvent('alert', {message: 'Сообщение не отправлено', type: "error", duration: 1000});
             })
@@ -81,27 +92,6 @@ export async function sendMessage(message, id) {
 }
 
 export function toggleLike(state, id) {
-    let endpoint = state ? 'add' : 'delete';
-    apis[2].request('https://www.avito.ru/web/1/favorites/items/' + endpoint, {
-        body: {
-            "ids": [id],
-            "x": "sralu8yv1l4nhv1m0zrw71p6btcjwmw",
-            "fromPage": "catalog"
-        },
-        headers: {},
-    }).catch(er => alert(er)).then(r => {
-        if (state) storagePush('liked', id);
-        else storageRemove('liked', id);
-    });
-}
-
-function callback(r) {
-    console.log(r)
-}
-
-export async function subscribe() {
-    let response = await Net.request('messages');
-    if (response.statusCode === 200) callback(response);
-    else await new Promise(resolve => setTimeout(resolve, 1000));
-    await subscribe();
+    if (state) storagePush('liked', id);
+    else storageRemove('liked', id);
 }
